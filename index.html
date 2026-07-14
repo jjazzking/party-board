@@ -341,7 +341,6 @@
   <span class="status"><i class="dot" id="dot"></i><span id="stat">연결 중…</span></span>
   <button class="btn ghost" id="themeBtn" title="라이트 / 다크 전환" aria-label="테마 전환">🌙 다크</button>
   <button class="btn ghost" id="exportBtn">내보내기</button>
-  <button class="btn ghost" id="resetBtn">초기화</button>
 </div>
 
 <div class="banner" id="banner" hidden></div>
@@ -738,7 +737,7 @@ function cardShell(c,i){
   const cmtN=comments.length;
   const openN=comments.filter(x=>x.status!=="done").length;
   return `<section class="card" data-open="${isOpen(c)}">
-    <button class="card-head" data-card="${i}">
+    <div class="card-head" data-card="${i}" role="button" tabindex="0" aria-label="카드 펼치기/접기">
       <span class="num mono">${n}</span>
       <span class="card-title">${E("cards."+i+".title")}</span>
       <span class="card-hint mono">${hint}</span>
@@ -749,7 +748,7 @@ function cardShell(c,i){
       </span>
       ${DEL("cards."+i)}
       <span class="toggle">+</span>
-    </button>
+    </div>
     <div class="card-body">${body}${threadHTML(i)}</div></section>`;
 }
 /* ---- table (free-form rows × cols) ---- */
@@ -941,11 +940,13 @@ function wire(){
     el.onclick=e=>e.stopPropagation();
   });
   document.querySelectorAll(".card-head").forEach(h=>{
-    h.onclick=e=>{ if(e.target.closest(".ed")||e.target.closest(".del")||e.target.closest(".mv"))return;
-      // 펼침은 로컬 상태만 변경 — 저장/브로드캐스트 없이 이 사람 화면에서만 열림
-      const c=M.cards[+h.dataset.card];
+    // 펼침은 로컬 상태만 변경 — 저장/브로드캐스트 없이 이 사람 화면에서만 열림
+    const toggle=()=>{ const c=M.cards[+h.dataset.card];
       if(OPEN.has(c.id)) OPEN.delete(c.id); else OPEN.add(c.id);
       renderOpenState(); };
+    h.onclick=e=>{ if(e.target.closest(".ed")||e.target.closest(".del")||e.target.closest(".mv"))return; toggle(); };
+    // 헤더 자체가 포커스일 때만 키보드로 토글 — 제목 편집칸에서 친 스페이스가 카드를 닫지 않도록
+    h.onkeydown=e=>{ if(e.target!==h) return; if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle(); } };
   });
   document.querySelectorAll("[data-delcol]").forEach(b=>{
     b.onclick=e=>{ e.stopPropagation(); const [ci,cc]=b.dataset.delcol.split("|").map(Number);
@@ -1126,12 +1127,6 @@ document.getElementById("addCardTable").onclick=()=>{
 document.getElementById("exportBtn").onclick=()=>{
   const b=new Blob([JSON.stringify(M,null,2)],{type:"application/json"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="party-board.json"; a.click();
-};
-document.getElementById("resetBtn").onclick=()=>{
-  if(confirm("모두의 보드가 초기 상태로 되돌아갑니다. 계속할까요?")){
-    M=clone(DEFAULT); OPEN.clear(); M.cards.forEach(c=>{ if(c.open) OPEN.add(c.id); });
-    save(); render();
-  }
 };
 
 /* ================= boot ================= */
