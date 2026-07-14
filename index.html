@@ -341,7 +341,6 @@
   <span class="status"><i class="dot" id="dot"></i><span id="stat">연결 중…</span></span>
   <button class="btn ghost" id="themeBtn" title="라이트 / 다크 전환" aria-label="테마 전환">🌙 다크</button>
   <button class="btn ghost" id="exportBtn">내보내기</button>
-  <button class="btn ghost" id="resetBtn">초기화</button>
 </div>
 
 <div class="banner" id="banner" hidden></div>
@@ -1128,12 +1127,6 @@ document.getElementById("addCardTable").onclick=()=>{
 document.getElementById("exportBtn").onclick=()=>{
   const b=new Blob([JSON.stringify(M,null,2)],{type:"application/json"});
   const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="party-board.json"; a.click();
-};
-document.getElementById("resetBtn").onclick=()=>{
-  if(confirm("모두의 보드가 초기 상태로 되돌아갑니다. 계속할까요?")){
-    M=clone(DEFAULT); OPEN.clear(); M.cards.forEach(c=>{ if(c.open) OPEN.add(c.id); });
-    save(); render();
-  }
 };
 
 /* ================= boot ================= */
