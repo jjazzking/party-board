@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>딥하우스 라운지 파티 — 기획 보드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#100E0C; --panel:#1A1714; --panel-2:#221E19; --panel-3:#2A251E;
+    --line:#3A332A; --line-soft:#2C2721;
+    --bone:#EAE3D5; --muted:#968C80; --muted-2:#6E655C;
+    --amber:#F0A93B; --amber-dim:#7A5A24;
+    --patina:#6FA89C; --patina-dim:#2F4B47;
+    --blood:#A94438; --radius:3px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--ink);
+    background-image:
+      radial-gradient(1100px 600px at 50% -12%, rgba(240,169,59,.10), transparent 65%),
+      radial-gradient(700px 500px at 100% 100%, rgba(111,168,156,.05), transparent 60%);
+    background-attachment:fixed;
+    color:var(--bone);
+    font-family:"IBM Plex Sans KR", system-ui, sans-serif;
+    font-weight:300; line-height:1.62; -webkit-font-smoothing:antialiased;
+    padding:0 20px 90px;
+  }
+  .wrap{max-width:980px;margin:0 auto}
+  .mono{font-family:"IBM Plex Mono", ui-monospace, monospace}
+
+  /* toolbar */
+  .bar{position:sticky;top:0;z-index:50;margin:0 -20px;padding:9px 20px;
+    background:rgba(16,14,12,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line-soft);
+    display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .bar .spacer{flex:1}
+  .btn{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    background:rgba(255,255,255,.03);border:1px solid var(--line);color:var(--muted);
+    padding:7px 12px;border-radius:var(--radius);cursor:pointer;transition:.18s}
+  .btn:hover{color:var(--bone);border-color:var(--muted-2)}
+  .btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .btn.on{background:var(--amber);border-color:var(--amber);color:var(--ink);font-weight:600}
+  .btn.ghost{border-color:transparent}
+  .status{display:flex;align-items:center;gap:7px;font-family:"IBM Plex Mono",monospace;font-size:10px;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--muted-2);flex:none;transition:.3s}
+  .dot.live{background:var(--patina);box-shadow:0 0 8px rgba(111,168,156,.8)}
+  .dot.saving{background:var(--amber);box-shadow:0 0 8px rgba(240,169,59,.8)}
+  .dot.err{background:var(--blood)}
+  .who{font-family:"IBM Plex Mono",monospace;font-size:11px;background:rgba(255,255,255,.03);
+    border:1px solid var(--line);color:var(--bone);border-radius:var(--radius);padding:6px 9px;width:96px}
+  .who:focus{outline:1px solid var(--amber)}
+  .banner{background:rgba(169,68,56,.12);border:1px solid rgba(169,68,56,.5);border-radius:var(--radius);
+    padding:12px 16px;margin:16px auto 0;max-width:980px;font-size:13px;color:#E6C3BE}
+  .banner b{color:var(--blood)}
+  .banner code{font-family:"IBM Plex Mono",monospace;font-size:12px;background:rgba(0,0,0,.35);padding:2px 5px;border-radius:2px}
+
+  header{padding:52px 0 40px;border-bottom:1px solid var(--line-soft)}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.34em;text-transform:uppercase;color:var(--amber);margin-bottom:20px}
+  h1{font-family:"Black Han Sans",sans-serif;font-weight:400;font-size:clamp(34px,6.4vw,60px);line-height:1.05}
+  h1 .accent{color:var(--amber);display:block}
+  .sub{color:var(--muted);font-size:15px;margin-top:18px;max-width:58ch}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px;align-items:center}
+  .chip{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;color:var(--muted);
+    border:1px solid var(--line);border-radius:var(--radius);padding:6px 11px;background:rgba(255,255,255,.015);
+    display:inline-flex;align-items:center}
+  .chip b{color:var(--bone);font-weight:500}
+
+  .cards{margin-top:44px;display:flex;flex-direction:column;gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden;transition:.25s}
+  .card[data-open="true"]{border-color:var(--line);background:var(--panel-2)}
+  .card-head{width:100%;background:none;border:0;color:inherit;cursor:pointer;display:flex;align-items:center;gap:18px;text-align:left;padding:20px 22px;font:inherit}
+  .card-head:hover .card-title{color:var(--amber)}
+  .card-head:focus-visible{outline:2px solid var(--amber);outline-offset:-2px}
+  .num{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted-2);letter-spacing:.1em;flex:none;width:26px}
+  .card[data-open="true"] .num{color:var(--amber)}
+  .card-title{font-family:"Black Han Sans",sans-serif;font-weight:400;font-size:clamp(17px,2.3vw,21px);flex:1;transition:color .2s}
+  .card-hint{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;color:var(--muted-2);text-transform:uppercase;display:none}
+  @media(min-width:620px){.card-hint{display:block}}
+  .toggle{flex:none;width:22px;height:22px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;color:var(--muted);font-size:13px;line-height:1;transition:.3s}
+  .card[data-open="true"] .toggle{transform:rotate(45deg);border-color:var(--amber);color:var(--amber)}
+  .card-body{display:none;padding:2px 22px 26px}
+  .card[data-open="true"] .card-body{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .card-move{display:none}
+  body.edit .card-move{display:inline-flex;gap:4px}
+  .mv{width:20px;height:20px;border:1px solid var(--line);background:none;color:var(--muted);border-radius:2px;
+    font-size:10px;line-height:1;cursor:pointer;display:grid;place-items:center}
+  .mv:hover{border-color:var(--amber);color:var(--amber)}
+
+  .ed{outline:none;border-radius:2px}
+  body.edit .ed{background:rgba(240,169,59,.05);box-shadow:inset 0 -1px 0 rgba(240,169,59,.28);padding:0 3px;margin:0 -3px;cursor:text}
+  body.edit .ed:hover{background:rgba(240,169,59,.11)}
+  body.edit .ed:focus{background:rgba(240,169,59,.14);box-shadow:inset 0 0 0 1px var(--amber)}
+  .del,.add{display:none}
+  body.edit .del{display:inline-grid;place-items:center;width:17px;height:17px;flex:none;
+    border:1px solid rgba(169,68,56,.5);background:rgba(169,68,56,.12);color:var(--blood);
+    border-radius:2px;font-size:11px;line-height:1;cursor:pointer;margin-left:6px;vertical-align:middle}
+  body.edit .del:hover{background:var(--blood);color:var(--ink)}
+  body.edit .add{display:inline-flex;align-items:center;gap:5px;margin-top:10px;
+    font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+    border:1px dashed var(--amber-dim);background:none;color:var(--amber);padding:5px 10px;border-radius:2px;cursor:pointer}
+  body.edit .add:hover{background:rgba(240,169,59,.1)}
+  .addrow{display:flex;gap:6px;flex-wrap:wrap}
+  .editonly{display:none}
+  body.edit .editonly{display:block}
+  body.edit .addrow.editonly{display:flex}
+  .addcard{width:100%;margin-top:6px;padding:16px;border:1px dashed var(--line);background:none;
+    color:var(--muted-2);font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;border-radius:var(--radius);cursor:pointer;transition:.2s}
+  .addcard:hover{border-color:var(--amber);color:var(--amber);background:rgba(240,169,59,.04)}
+
+  .steps{list-style:none;border-top:1px solid var(--line-soft)}
+  .step{display:flex;gap:16px;padding:13px 0;border-bottom:1px solid var(--line-soft);align-items:baseline}
+  .step-i{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted-2);flex:none;width:22px}
+  body.edit .step-i{cursor:pointer}
+  .step-t{font-weight:500;font-size:15px;flex:none;min-width:150px}
+  .step-d{color:var(--muted);font-size:14px;flex:1}
+  .step[data-state="done"] .step-i{color:var(--patina)}
+  .step[data-state="now"]{background:linear-gradient(90deg,rgba(240,169,59,.09),transparent 70%);margin:0 -12px;padding:13px 12px;border-left:2px solid var(--amber)}
+  .step[data-state="now"] .step-i,.step[data-state="now"] .step-t{color:var(--amber)}
+  .hintline{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;color:var(--muted-2);margin-top:12px}
+
+  .warn{margin-top:22px;border:1px solid var(--line);border-left:2px solid var(--blood);border-radius:var(--radius);padding:16px 18px;background:rgba(169,68,56,.06)}
+  .warn-h{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--blood);margin-bottom:12px;display:flex}
+  .warn-h .ed{flex:1}
+  .warn p{font-size:14px;color:var(--muted);margin-bottom:9px}
+  .warn p:last-of-type{margin-bottom:0}
+  .warn b{color:var(--bone);font-weight:600}
+
+  .ra{display:grid;gap:12px;padding-top:6px}
+  @media(min-width:760px){.ra{grid-template-columns:1fr 1fr}}
+  .ra-item{border:1px solid var(--line-soft);border-radius:var(--radius);padding:18px;background:rgba(0,0,0,.18)}
+  .ra-lab{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;padding:3px 7px;border-radius:2px;display:inline-block;margin-bottom:12px}
+  body.edit .ra-lab{cursor:pointer}
+  .ra-item[data-k="asset"]{border-left:2px solid var(--patina)}
+  .ra-item[data-k="asset"] .ra-lab{color:var(--patina);border:1px solid var(--patina-dim);background:rgba(111,168,156,.08)}
+  .ra-item[data-k="risk"]{border-left:2px solid var(--blood)}
+  .ra-item[data-k="risk"] .ra-lab{color:var(--blood);border:1px solid rgba(169,68,56,.4);background:rgba(169,68,56,.08)}
+  .ra-item[data-k="both"]{border-left:2px solid var(--amber)}
+  .ra-item[data-k="both"] .ra-lab{color:var(--amber);border:1px solid var(--amber-dim);background:rgba(240,169,59,.08)}
+  .ra-t{font-weight:600;font-size:16px;margin-bottom:8px}
+  .ra-d{font-size:14px;color:var(--muted)}
+  .ra-d b{color:var(--bone);font-weight:600}
+  .ra-do{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--amber)}
+
+  .board-note{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-2);display:flex;gap:16px;flex-wrap:wrap;padding:4px 0 14px}
+  .legend{display:flex;align-items:center;gap:6px}
+  .swatch{width:16px;height:6px;border-radius:1px}
+  .sw-a{background:var(--amber)} .sw-p{background:var(--patina)}
+  .board{display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--line-soft);padding-top:12px}
+  .strip{background:rgba(0,0,0,.2);border:1px solid var(--line-soft);border-radius:var(--radius);cursor:pointer;
+    display:grid;grid-template-columns:78px 1fr;gap:4px 16px;align-items:center;padding:13px 14px;transition:.25s}
+  @media(min-width:720px){.strip{grid-template-columns:82px minmax(140px,1fr) 132px 74px 20px;gap:16px}}
+  .strip:hover{background:rgba(240,169,59,.05);border-color:var(--amber-dim)}
+  .strip:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .strip.sel{background:linear-gradient(90deg,rgba(240,169,59,.14),rgba(240,169,59,.03));border-color:var(--amber);
+    box-shadow:0 0 26px -8px rgba(240,169,59,.5), inset 0 0 30px -22px var(--amber)}
+  .s-time{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted)}
+  .strip.sel .s-time{color:var(--amber)}
+  .s-name{font-weight:500;font-size:15px}
+  .s-name small{display:block;font-weight:300;font-size:12px;color:var(--muted-2)}
+  .s-bpm{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted-2)}
+  .s-arrow{color:var(--muted-2);font-size:12px;display:none}
+  @media(min-width:720px){.s-arrow{display:block}}
+  .strip.sel .s-arrow{color:var(--amber)}
+  .meters{display:flex;flex-direction:column;gap:4px;grid-column:2/-1}
+  @media(min-width:720px){.meters{grid-column:auto}}
+  .meter{display:flex;align-items:center;gap:6px}
+  .m-lab{font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:.12em;color:var(--muted-2);width:34px;flex:none}
+  .m-bars{display:flex;gap:2px}
+  .m-bars i{width:9px;height:7px;border-radius:1px;background:var(--line);transition:.3s}
+  body.edit .m-bars i{cursor:pointer}
+  .meter[data-type="snd"] i.on{background:var(--amber)}
+  .meter[data-type="soc"] i.on{background:var(--patina)}
+  .strip.sel .meter[data-type="snd"] i.on{box-shadow:0 0 8px rgba(240,169,59,.8)}
+  .strip.sel .meter[data-type="soc"] i.on{box-shadow:0 0 8px rgba(111,168,156,.7)}
+
+  .detail{margin-top:16px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-3);overflow:hidden}
+  .d-head{padding:20px 22px 0;border-bottom:1px solid var(--line-soft)}
+  .d-kicker{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.2em;color:var(--amber);text-transform:uppercase}
+  .d-title{font-family:"Black Han Sans",sans-serif;font-weight:400;font-size:22px;margin:8px 0 4px}
+  .d-sub{color:var(--muted);font-size:14px;margin-bottom:18px}
+  .tabs{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:-1px;align-items:center}
+  .tab{background:none;border:1px solid transparent;border-bottom:none;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;padding:9px 15px;border-radius:var(--radius) var(--radius) 0 0;transition:.18s}
+  .tab:hover{color:var(--bone);background:rgba(255,255,255,.03)}
+  .tab.sel{color:var(--amber);font-weight:500;background:var(--panel-2);border-color:var(--line-soft);border-bottom:1px solid var(--panel-2)}
+  .d-body{padding:24px 22px 26px;background:var(--panel-2)}
+
+  .blk{margin-bottom:24px}
+  .blk:last-child{margin-bottom:0}
+  .blk-h{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted-2);padding-bottom:8px;margin-bottom:12px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center}
+  .blk-h .ed{flex:1}
+  .blk p{font-size:14.5px;color:#C6BDB0;margin-bottom:10px}
+  .blk b{color:var(--bone);font-weight:600}
+  .blk .hi{color:var(--amber);font-weight:500}
+  .blk ul{list-style:none;display:flex;flex-direction:column;gap:9px}
+  .blk li{font-size:14.5px;color:#C6BDB0;padding-left:16px;position:relative}
+  .blk li::before{content:"";position:absolute;left:0;top:10px;width:5px;height:5px;border-radius:1px;background:var(--amber-dim)}
+  .blk li b{color:var(--bone);font-weight:600}
+  .run-r{display:grid;grid-template-columns:56px 1fr;gap:14px;padding:10px 0;border-bottom:1px solid var(--line-soft);align-items:baseline}
+  .run-r:last-child{border-bottom:none}
+  .run-t{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--amber)}
+  .run-d{font-size:14.5px;color:#C6BDB0}
+  .run-d b{color:var(--bone);font-weight:600}
+  .rule{border:1px solid var(--line);border-left:2px solid var(--amber);border-radius:var(--radius);background:rgba(240,169,59,.06);padding:14px 16px;font-size:14px;color:#D2C9BB;margin-top:16px;display:flex;align-items:flex-start}
+  .rule .ed{flex:1}
+  .rule b{color:var(--amber);font-weight:600}
+  .rule.red{border-left-color:var(--blood);background:rgba(169,68,56,.07)}
+  .rule.red b{color:var(--blood)}
+  .kit{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .kit .k{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:#C6BDB0;border:1px solid var(--line);border-radius:2px;padding:5px 9px;background:rgba(0,0,0,.2);display:inline-flex;align-items:center}
+
+  .q-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:6px 0 16px;border-bottom:1px solid var(--line-soft);margin-bottom:16px}
+  .prog{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);letter-spacing:.08em;margin-left:auto}
+  .prog b{color:var(--amber);font-weight:600}
+  .qsec{margin-bottom:26px}
+  .qsec-h{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--amber);margin-bottom:10px;display:flex;align-items:center}
+  .q{display:grid;grid-template-columns:22px 18px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line-soft);align-items:start}
+  .q.hide{display:none}
+  .q-box{width:16px;height:16px;margin-top:3px;border:1px solid var(--line);border-radius:2px;background:rgba(0,0,0,.25);cursor:pointer;display:grid;place-items:center;color:transparent;font-size:11px;transition:.15s}
+  .q-box:hover{border-color:var(--patina)}
+  .q-box.on{background:var(--patina);border-color:var(--patina);color:var(--ink)}
+  .q-star{font-size:12px;color:var(--muted-2);cursor:pointer;line-height:1.6;user-select:none}
+  .q-star.on{color:var(--amber)}
+  .q-t{font-size:14.5px;color:#C6BDB0;display:block}
+  .q.done .q-t{color:var(--muted-2)}
+  .q-note{margin-top:6px;font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--patina);
+    border-left:2px solid var(--patina-dim);padding-left:9px;min-height:18px;outline:none}
+  .q-note:empty::before{content:"답변 메모…";color:var(--muted-2);opacity:.5}
+  .q-note:focus{background:rgba(111,168,156,.06)}
+
+  footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line-soft);font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-2);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <button class="btn" id="editBtn">✎ 편집</button>
+  <input class="who" id="who" placeholder="이름" maxlength="12">
+  <span class="spacer"></span>
+  <span class="status"><i class="dot" id="dot"></i><span id="stat">연결 중…</span></span>
+  <button class="btn ghost" id="exportBtn">내보내기</button>
+  <button class="btn ghost" id="resetBtn">초기화</button>
+</div>
+
+<div class="banner" id="banner" hidden></div>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow mono">Planning Board — Live</div>
+    <h1><span class="ed" data-p="head.t1"></span><span class="accent ed" data-p="head.t2"></span></h1>
+    <p class="sub ed" data-p="head.sub"></p>
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <main class="cards" id="cards"></main>
+  <button class="addcard editonly" id="addCard">+ 카드 추가</button>
+
+  <footer>
+    <span>Deep House Lounge Party — Live Board</span>
+    <span id="footNote">URL을 아는 사람은 누구나 편집할 수 있습니다</span>
+  </footer>
+</div>
+
+<script type="module">
+/* ============================================================
+   설정 — Supabase 프로젝트 값 두 개만 채우면 됩니다.
+   ============================================================ */
+const SUPABASE_URL      = "https://adqrvvcsvuageemtaljw.supabase.co";   // 예: https://abcdefgh.supabase.co
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkcXJ2dmNzdnVhZ2VlbXRhbGp3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMTMyMzAsImV4cCI6MjA5ODg4OTIzMH0.HOSDn2M-M44-Ez1I6lrdKMzP7YpGpLch402T1xT4KvA";   // 예: eyJhbGciOi...
+const BOARD_ID          = "party-2026";   // 보드 하나당 하나의 id
+/* ============================================================ */
+
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const DEFAULT = {
+  head:{
+    t1:"딥하우스 라운지 파티", t2:"기획 보드",
+    sub:"친구 · 지인 · 지인의 지인이 좋은 음악 아래에서 섞이는 소셜 파티. 카드를 눌러 펼치고, 타임라인의 각 구간을 눌러 세부 계획을 확인하세요. 편집 모드를 켜면 모두가 실시간으로 함께 고칠 수 있습니다.",
+    chips:["게스트 <b>30–40</b>","런타임 <b>19:00 – 23:00</b>","사운드 <b>DDJ + 빈티지 스피커 / 바이닐</b>","장르 <b>DEEP HOUSE · UKG · K-POP EDITS</b>","공간 <b>2F 큰 방 + 작은 방</b>"]
+  },
+  cards:[
+    { id:"steps", type:"steps", title:"기획 순서 — 프로들은 이렇게 굴린다", open:false,
+      warnH:"초보가 반드시 하는 실수 두 가지",
+      warns:[
+        "<b>① DJ가 호스트를 겸하려 한다.</b> 못 한다. 부스에 들어가는 순간 파티를 볼 수 없고, 아무도 챙길 수 없다. 도어 · 진행 · 사진을 맡을 친구를 반드시 미리 확보할 것.",
+        "<b>② 사운드 검증을 당일에 한다.</b> 빈티지 스피커에 컨트롤러를 꽂는 건 “되겠지”의 영역이 아니다. 답사 때 DDJ를 직접 들고 가서 소리를 내봐야 한다. 이번 기획에서 가장 중요한 액션이다."
+      ],
+      items:[
+        {s:"done",t:"목적 &amp; 게스트 정의",d:"한 문장으로. → “좋은 음악 아래에서 지인의 지인끼리 섞이는 소셜 파티.” 이 문장이 모든 결정의 기준이 된다."},
+        {s:"now",t:"베뉴 확정 &amp; 제약 파악",d:"질문지 발송 → 답사(DDJ 지참, 실제 연결) → 계약. 여기서 나온 제약이 아래 모든 단계를 결정한다."},
+        {s:"",t:"예산 &amp; 정산",d:"참가비를 걷을지 먼저 결정. 무료 파티는 노쇼가 30% 이상 난다. 소액이라도 받으면 참석률이 급등한다."},
+        {s:"",t:"프로그램 / 타임라인",d:"시간표가 아니라 <b>에너지 곡선</b>을 짠다. 각 구간이 “무슨 기분”인지 정의하는 게 핵심."},
+        {s:"",t:"테크 (사운드 · 조명)",d:"파티의 90%가 여기서 결정된다. 사운드가 안 되면 나머지 계획은 전부 무의미하다."},
+        {s:"",t:"초대 &amp; RSVP",d:"목표 인원의 1.4배를 초대. 35명이 목표면 50명에게 보낸다. 마감일을 명시하면 응답률이 오른다."},
+        {s:"",t:"당일 롤 배분",d:"도어 1 · 2부 진행 1 · 사진 1 · 플로어 씨딩 3~4. 이름을 적어서 미리 부탁해야 실제로 움직인다."},
+        {s:"",t:"사후",d:"24시간 안에 사진 공유, 감사 메시지, 다음 파티 떡밥 한 줄. 다음 파티의 게스트는 여기서 생긴다."}
+      ]},
+    { id:"ra", type:"ra", title:"이 공간의 리스크와 자산", open:false,
+      items:[
+        {k:"both",l:"자산 = 리스크",t:"빈티지 스피커 + 바이닐 턴테이블",
+         d:"두 갈래로 갈린다. <b>혼 로디드 계열</b>(Altec, JBL 43xx, Klipsch 등)이면 효율이 미쳤고 중역이 두꺼워서 딥하우스 · 개러지가 말도 안 되게 좋게 나온다. 반대로 <b>소형 북셸프 + 진공관 앰프</b>면 저역 한계가 명확하고, 볼륨을 올리면 트위터가 죽는다.",
+         do:"→ 스피커 · 앰프 모델명을 반드시 받아낼 것. 이 하나로 셋 구성이 통째로 바뀐다."},
+        {k:"risk",l:"리스크",t:"DDJ를 어디에 꽂을 것인가",
+         d:"턴테이블이 있다는 건 <b>믹서가 있다는 뜻</b>이다. 여기에 라인 입력(RCA) 여유 채널이 하나만 있으면 DDJ 마스터 아웃을 꽂고 끝. 없으면 앰프 AUX 직결인데, 이 경우 험(hum) 노이즈와 게인 매칭 문제가 생긴다.",
+         do:"→ 믹서 모델명 확인 + 답사 때 실제 연결 테스트."},
+        {k:"risk",l:"리스크",t:"1층 일반 손님 = 볼륨 상한선",
+         d:"딥하우스의 킥은 바닥을 타고 아래로 내려간다. 2층에서 아무리 좋아도 <b>1층 손님이 컴플레인하면 그 자리에서 볼륨이 깎이고 파티가 죽는다.</b> 상한을 사전 합의하고, 그 상한선을 기준으로 셋을 짜는 것 — 이게 프로와 아마추어의 차이다.",
+         do:"→ 사운드체크 때 상한 볼륨에 마스킹테이프로 표시."},
+        {k:"asset",l:"자산",t:"작은 방 = 숨겨진 무기",
+         d:"창고로 쓰면 낭비다. <b>대화방(Chill Room)</b>으로 세팅할 것. 30~40명이 4시간을 버티려면 음악에서 도망칠 곳이 반드시 필요하고, 소셜 파티의 실제 mingling은 대부분 이런 방에서 일어난다.",
+         do:"→ 짐 보관 겸용. 조명 살짝 밝게, 앉을 자리 확보."}
+      ]},
+    { id:"timeline", type:"timeline", title:"파티 구조 — 채널 스트립 타임라인", open:true, active:2, activeTab:{},
+      items:[
+        {time:"18:00",name:"로드인 · 사운드체크",note:"1시간 확보 필수",bpm:"—",snd:2,soc:0,
+         kicker:"Pre-show",title:"로드인 · 사운드체크",sub:"18:00 – 19:00 · 여기서 파티의 성패가 갈린다",
+         tabs:[
+          {t:"사운드체크",blocks:[{ty:"ul",h:"순서",items:[
+            "<b>DDJ 마스터 아웃 → 믹서 라인 채널.</b> 케이블을 흔들면서 험(hum) 노이즈가 타는지 확인한다.",
+            "<b>게인 스테이징.</b> 마스터를 −6dB로 잡고 시작. 빈티지 앰프에서의 클리핑 = 트위터 사망이다.",
+            "<b>저역 한계 테스트.</b> 킥이 강한 트랙 1곡, 서브 베이스가 깊은 트랙 1곡. 어디서 무너지는지 귀로 확인.",
+            "<b>1층에 직접 내려가 본다.</b> 소리가 얼마나 새는지 듣고, 그 볼륨을 상한선으로 잡아 마스킹테이프로 표시.",
+            "<b>바이닐 ↔ DDJ 전환</b>을 최소 1회 리허설. 본 공연 중 무음 3초는 파티를 식힌다.",
+            "<b>헤드폰 큐</b>와 <b>마이크</b>(2부용) 확인."]}]},
+          {t:"가져갈 것",blocks:[
+            {ty:"kit",h:"케이블 · 장비",items:["RCA — RCA","RCA — XLR","3.5mm 변환","멀티탭","노트북 충전기","헤드폰","DI박스"]},
+            {ty:"kit",h:"백업 · 소모품",items:["USB 백업 ×2","마스킹테이프","펜 · 문제지","색 스티커","네임택"]},
+            {ty:"p",h:"원칙",items:["<b>USB 백업은 두 개.</b> 노트북이 죽어도 셋이 이어져야 한다. 40명 앞에서 노트북을 재부팅하는 5분은 영원처럼 길다."]}]},
+          {t:"공간 세팅",blocks:[{ty:"ul",h:"체크리스트",items:[
+            "<b>작은 방</b> → 대화방 + 짐 보관. 조명은 큰 방보다 밝게.",
+            "<b>입구 테이블</b> → 네임택, 색 스티커, 펜, 웰컴 드링크 티켓.",
+            "<b>큰 방 조명</b> → 최대한 낮춘다. 밝으면 아무도 안 춤춘다.",
+            "<b>물</b> → 눈에 띄는 곳에.",
+            "<b>롤 확인</b> → 도어 담당에게 다시 한번 브리핑."]}]}
+         ]},
+        {time:"19:00",name:"도착 · 웰컴",note:"체크인 &amp; 워밍업",bpm:"100–115",snd:1,soc:3,
+         kicker:"Part 0",title:"도착 · 웰컴",sub:"19:00 – 20:00 · 아직 파티는 시작되지 않았다는 신호를 주는 시간",
+         tabs:[
+          {t:"음악",blocks:[
+            {ty:"p",h:"방향",items:[
+              "<b>100–115 BPM.</b> 대화가 가능한 볼륨 — 사람 목소리보다 살짝 아래로 깔아준다.",
+              "<b>베뉴의 빈티지 셋과 바이닐을 그대로 쓰는 게 최고의 선택이다.</b> 이 공간의 정체성이고, 나중에 DDJ로 넘어갈 때 “파티가 시작됐다”는 전환이 극적으로 살아난다.",
+              "재즈 펑크 · 소울 · 오가닉 하우스 · 발레아릭 계열. 4/4 킥을 세게 때리는 트랙은 이 시간에 절대 나가지 않는다."]},
+            {ty:"rule",red:false,text:"<b>원칙 —</b> 도착 구간의 임무는 감동시키는 게 아니라 <b>공간을 편하게 만드는 것</b>이다. 여기서 좋은 걸 다 써버리면 8시에 쓸 카드가 없다."}]},
+          {t:"체크인 동선",blocks:[
+            {ty:"run",h:"입구에서 5단계",items:[
+              ["①","<b>이름 확인</b> — 도어 담당 1명 고정. 이 사람은 파티 내내 입구를 지킨다."],
+              ["②","<b>웰컴 드링크 티켓</b> 지급 — 1인 1잔. 술이 손에 들어가야 대화가 시작된다."],
+              ["③","<b>네임택 + 랜덤 색 스티커</b> — 스티커 색이 2부의 팀이 된다."],
+              ["④","<b>“나의 한 곡” 적기</b> — 낯선 사람에게 말 걸 구실이 생긴다."],
+              ["⑤","<b>짐은 작은 방</b>으로 안내."]]},
+            {ty:"rule",red:false,text:"<b>이 구간의 성공 지표 —</b> 19:50에 아무도 벽에 혼자 서 있지 않은 것. 친구 3~4명에게 “처음 오는 사람 말 걸어주기”를 미리 부탁해 둘 것."}]},
+          {t:"첫인사 대본",blocks:[
+            {ty:"p",h:"19:50 · 30초 · 음악 줄이고",items:[
+              "“와줘서 고마워요. 오늘 흐름만 짧게 알려드릴게요.",
+              "<b>8시부터 한 시간</b> 제가 셋 하나 틀고, <b>9시엔 다 같이 하는 게임</b> 하나 있어요. 그 다음부터는 그냥 춤입니다.",
+              "옆 방은 <b>대화방</b>이니까 시끄러우면 언제든 피신하세요.",
+              "<b>스티커 색 잃어버리지 마세요</b> — 9시에 그 색이 팀이 됩니다.”",
+              "→ 그리고 바로 <span class='hi'>건배</span>."]},
+            {ty:"rule",red:false,text:"<b>길게 하지 말 것.</b> 30초를 넘기는 순간 사람들은 술잔을 내려놓고 파티는 회의가 된다."}]}
+         ]},
+        {time:"20:00",name:"1부 · 오프닝 셋",note:"DJ SET — 60min",bpm:"118→128",snd:3,soc:3,
+         kicker:"Part 1",title:"1부 — 오프닝 셋",sub:"20:00 – 21:00 · 사람들을 플로어 쪽으로 ‘초대’하는 한 시간",
+         tabs:[
+          {t:"셋 설계",blocks:[
+            {ty:"run",h:"20분 × 3 블록",items:[
+              ["20:00","<b>118–120 · 딥하우스 그루브.</b> 아직 춤을 강요하지 않는다. 술잔을 든 채로 몸이 흔들릴 정도. Kerri Chandler · Larry Heard · Fred P · Session Victim 계열."],
+              ["20:20","<b>120–124 · 소울풀 / 개러지 하우스.</b> 보컬 훅이 있는 트랙. 사람들의 고개가 들리기 시작하는 구간. <span class='hi'>여기서 첫 K-pop 앵커.</span>"],
+              ["20:40","<b>124–128 · 2-step 진입.</b> 스윙 그루브. <span class='hi'>두 번째 K-pop 앵커.</span> 21:00 직전에 가장 큰 훅으로 마감 → 그 텐션 그대로 행사로."]]},
+            {ty:"rule",red:false,text:"<b>1부는 ‘증명’이 아니라 ‘초대’다.</b> 초반에 130 BPM을 박으면 사람들은 플로어를 피한다. 첫 30분의 임무는 <b>사람들이 음악을 등지지 않게 하는 것</b>뿐이다."}]},
+          {t:"K-pop 앵커",blocks:[
+            {ty:"p",h:"앵커란",items:["<b>앵커 = 사람들이 알아듣는 순간 고개를 드는 곡.</b> 1부에 2곡, 3부에 4~5곡. 그 이상은 필요 없다."]},
+            {ty:"ul",h:"가장 잘 붙는 소스",items:[
+              "<b>NewJeans</b> — Super Shy · ETA는 UK 개러지 문법 그대로고, Ditto는 저지 클럽이다. <b>원곡 BPM이 이미 셋에 붙는다.</b>",
+              "<b>아카펠라 / 인스트루멘탈 분리</b> — K-pop 보컬만 따서 2-step 드럼 위에 얹는 것. 가장 안전한 조합.",
+              "<b>템포 매칭</b> — 원곡이 128 근처면 EQ만 손봐도 붙는다. 100 근처 발라드는 억지로 끌어올리지 말 것."]},
+            {ty:"rule",red:false,text:"<b>앵커를 연속 2곡 이상 두지 말 것.</b> 그 순간 이 파티는 ‘K-pop 파티’가 되고 딥하우스의 흐름이 죽는다. <b>20~25분에 1곡</b>이 황금비다."},
+            {ty:"rule",red:true,text:"<b>앵커는 마약이다.</b> 반응이 좋았다고 계속 던지면 사람들은 다음 K-pop만 기다리게 되고, 그 사이 트랙에서는 플로어가 빈다."}]},
+          {t:"믹싱 노트",blocks:[{ty:"ul",h:"빈티지 시스템 전제",items:[
+            "<b>서브(50Hz 이하)가 약하고 중역이 두껍다.</b> 서브 헤비한 모던 UKG는 얇게 들린다. → 중저역에서 그루브가 도는 <b>클래식 딥하우스 · 시카고 / 저지 개러지</b>가 압도적으로 잘 나온다.",
+            "<b>플랜 B 폴더를 따로 만들 것.</b> 사운드체크에서 저역이 안 나오면 셋의 절반을 바꿔야 한다.",
+            "<b>로우컷을 평소보다 과감하게.</b> 로우엔드가 겹치면 사람보다 앰프가 먼저 죽는다.",
+            "<b>롱 믹스(32~64박)</b>가 40명 규모에서 훨씬 좋다.",
+            "<b>마스터 −6 ~ −3dB.</b> 클리핑 램프가 뜨면 즉시 내린다."]}]}
+         ]},
+        {time:"21:00",name:"2부 · 행사",note:"mingling 장치",bpm:"음악 ↓",snd:1,soc:5,
+         kicker:"Part 2",title:"2부 — 행사",sub:"21:00 – 21:40 · 구경거리가 아니라 ‘섞이게 하는 장치’",
+         tabs:[
+          {t:"행사 A · 뮤직 퀴즈",blocks:[
+            {ty:"p",h:"메인 추천 · 30분",items:[
+              "<b>성공 지표는 웃음이 아니라 ‘지인의 지인끼리 말을 텄는가’다.</b>",
+              "<b>팀 구성:</b> 입장 때 받은 색 스티커로 랜덤 4~5인. <span class='hi'>아는 사람끼리 못 뭉치는 게 이 행사의 유일하고 진짜인 메커니즘이다.</span>"]},
+            {ty:"run",h:"라운드",items:[
+              ["R1","<b>인트로 맞히기</b> (10분) — 하우스 클래식 + K-pop 10곡, 각 7초."],
+              ["R2","<b>샘플 추적</b> (10분) — “이 하우스 트랙이 샘플한 원곡은?” 5문제."],
+              ["R3","<b>오늘의 셋</b> (10분) — 1부에 틀었던 K-pop 리믹스의 원곡 맞히기."]]},
+            {ty:"rule",red:false,text:"<b>우승 특전 = 3부 첫 3곡 선곡권.</b> 행사가 댄스플로어로 이어진다. 단, <b>안전한 후보 10곡 안에서 고르게 할 것.</b>"}]},
+          {t:"행사 B · 내 한 곡",blocks:[
+            {ty:"ul",h:"대안 또는 병행 · 20분",items:[
+              "초대장에서 미리 수집한다 — <b>“당신을 소개하는 한 곡.”</b>",
+              "6~8명이 나와서 <b>한 줄 소개 + 90초 재생.</b> 곡 사이는 믹스로 이어붙인다.",
+              "<b>장점:</b> 음악 중심 파티에 어울리고 기억에 오래 남는다.",
+              "<b>단점:</b> 앞에 나서기 싫어하는 사람이 있고, mingling 효과는 퀴즈보다 약하다."]},
+            {ty:"rule",red:false,text:"<b>최적해 —</b> 무대는 생략하고 <b>네임택에 각자의 곡 제목을 적게 해서 A와 병행</b>한다. 준비 비용 0."}]},
+          {t:"진행 대본",blocks:[
+            {ty:"run",h:"21:00 – 21:40",items:[
+              ["21:00","음악 페이드 아웃 → 조명 <b>살짝</b> 올림. <b>절대 완전히 켜지 말 것.</b>"],
+              ["21:02","<b>건배 + 단체사진.</b> 5분 안에 끝낸다."],
+              ["21:07","<b>팀 모이기</b> — 스티커 색으로 3분."],
+              ["21:10","<b>라운드 1 → 2 → 3.</b> 진행은 담당 친구가. 너는 부스에서 음악만."],
+              ["21:35","<b>우승 발표 + 선곡권 전달.</b>"],
+              ["21:38","조명 다시 내림 → 우승팀 선곡으로 첫 곡 → <b>그대로 3부 진입.</b>"]]},
+            {ty:"rule",red:true,text:"<b>행사와 3부 사이에 공백을 만들지 마라.</b> 그 3분의 침묵이 파티를 죽인다."}]},
+          {t:"준비물",blocks:[
+            {ty:"kit",h:"장비",items:["무선 마이크","문제지 · 답안지","펜","색 스티커","프로젝터"]},
+            {ty:"kit",h:"콘텐츠",items:["퀴즈 20문제","우승 후보 10곡","작은 상품"]},
+            {ty:"p",h:"원칙",items:["<b>상품은 소박할수록 좋다.</b> 값이 나가면 사람들이 진심으로 이기려 들고, 그 순간 파티가 아니라 대회가 된다."]}]}
+         ]},
+        {time:"21:40",name:"3부 · 피크타임",note:"DJ SET — 80min",bpm:"128–135",snd:5,soc:2,
+         kicker:"Part 3",title:"3부 — 피크타임",sub:"21:40 – 23:00 · 오늘의 전부. 여기를 위해 앞의 세 시간이 있었다",
+         tabs:[
+          {t:"에너지 설계",blocks:[
+            {ty:"run",h:"80분의 곡선",items:[
+              ["21:40","<b>우승팀 선곡 3곡으로 시작.</b> 사람들은 이미 플로어에 서 있다. <span class='hi'>이 상태를 절대 놓치지 마라.</span>"],
+              ["22:00","<b>UKG 본론.</b> 128–135. 스윙 그루브 + 보컬 챱. K-pop 에딧 2곡."],
+              ["22:30","<b>피크.</b> 오늘 가장 자신 있는 3곡을 여기에 쓴다."],
+              ["22:50","<b>마지막 곡은 ‘다 같이 아는 곡’.</b> 떼창이 나오면 그날 파티는 성공으로 기억된다."]]},
+            {ty:"rule",red:false,text:"<b>피크는 한 번이면 충분하다.</b> 계속 올리려 하면 40명은 지친다. 클럽이 아니라 라운지다."}]},
+          {t:"플레이리스트",blocks:[
+            {ty:"ul",h:"UKG 축",items:[
+              "<b>클래식</b> — MJ Cole, Todd Edwards, Sunship, Artful Dodger 계열. 서브 의존도가 낮아 <b>빈티지 스피커에서 훨씬 잘 나온다.</b>",
+              "<b>모던</b> — Sammy Virji, Conducta, Interplanetary Criminal, salute 계열. 시스템이 약하면 얇게 들릴 수 있다.",
+              "<b>배분 원칙</b> — 사운드체크가 안 좋으면 <b>클래식 비중을 올린다.</b>"]},
+            {ty:"ul",h:"구성 규칙",items:[
+              "<b>K-pop 에딧은 20분에 1곡.</b>",
+              "<b>마지막 곡 후보 3개</b>를 미리 정해둔다.",
+              "<b>‘안 되면 이걸 튼다’ 트랙 5곡</b>을 따로 폴더링."]}]},
+          {t:"플로어 관리",blocks:[
+            {ty:"p",h:"현실",items:["<b>40명 중 실제로 춤추는 건 초반 8~10명이다.</b> 이 8명이 계속 플로어에 있게 만드는 게 DJ가 하는 일의 전부다."]},
+            {ty:"ul",h:"실행",items:[
+              "<b>씨딩(seeding).</b> 친구 3~4명에게 “9시 40분에 무조건 앞에 나와 있어줘.” <b>이걸 안 하면 플로어가 안 열린다.</b>",
+              "<b>볼륨.</b> 사운드체크 때 표시해둔 상한선을 넘지 말 것.",
+              "<b>물.</b> 40분마다 한 잔.",
+              "<b>부스에서 나오지 마라.</b> 인사는 23시 이후에."]}]}
+         ]},
+        {time:"23:00",name:"아웃트로",note:"바이닐로 복귀",bpm:"↓ 다운템포",snd:2,soc:4,
+         kicker:"Closing",title:"아웃트로",sub:"23:00 – · 끝내는 방식이 다음 파티의 참석률을 정한다",
+         tabs:[
+          {t:"마무리",blocks:[
+            {ty:"p",h:"음악",items:[
+              "<b>베뉴의 빈티지 셋과 바이닐로 돌아간다.</b> 시작한 곳으로 되돌아오는 것 — 가장 우아한 엔딩.",
+              "다운템포 · 소울 · 재즈. 볼륨을 서서히 낮춘다.",
+              "<b>“이제 갈 시간”이라고 말하지 마라.</b> 음악으로 알려주는 것이다."]},
+            {ty:"ul",h:"운영",items:["짐 · 분실물 정리.","베뉴 정산, 스태프에게 인사. <b>여기서 인상이 좋아야 다음에 또 빌린다.</b>","도와준 친구들에게 그 자리에서 감사 표현."]}]},
+          {t:"다음 날",blocks:[
+            {ty:"ul",h:"24시간 안에",items:[
+              "<b>사진 공유.</b> 늦으면 아무도 안 본다.",
+              "<b>감사 메시지 + 다음 파티 떡밥 한 줄.</b>",
+              "<b>못 온 사람에게도 사진을 보낸다.</b> 가장 효율 좋은 초대장이다.",
+              "<b>셋을 녹음했다면 믹스를 올린다.</b>"]},
+            {ty:"rule",red:false,text:"<b>기록해 둘 것 —</b> 볼륨은 어디까지 올렸는지, 어떤 트랙에서 플로어가 찼는지, 무엇이 실패했는지."}]}
+         ]}
+      ]},
+    { id:"venue", type:"venue", title:"베뉴 질문지 — 답사 체크리스트", open:false, filter:{star:false,todo:false},
+      items:[
+        {s:"A. 대관 조건",q:[
+          {x:1,t:"2층 <b>전체(큰 방 + 작은 방) 단독 사용</b>이 가능한가요? 큰 방만 대관인가요?"},
+          {x:1,t:"큰 방 최대 수용 인원은? <b>30~40명이 서서 춤출 수 있는</b> 공간이 나오나요?"},
+          {x:1,t:"요금 체계는 대관료 / 최소 주문 금액 / 1인 패키지 중 무엇인가요? <b>30명 · 40명 기준</b> 각각 얼마인가요?"},
+          {x:1,t:"이용 시간: 입장 / 라스트 오더 / 퇴장 시각은? (희망: <b>18:00 셋업 – 23:00~24:00 종료</b>)"},
+          {x:1,t:"<b>오픈 전 1시간, 사운드체크</b>를 위해 미리 들어갈 수 있나요?"},
+          {x:0,t:"예약금, 취소 규정, 결제 방식(카드 / 현금영수증 / 세금계산서)은?"},
+          {x:0,t:"1층 손님이 2층으로 올라올 수 있나요, 아니면 완전히 분리되나요?"},
+          {x:0,t:"작은 방을 <b>대화 라운지 + 짐 보관</b> 용도로 써도 되나요?"},
+          {x:0,t:"2층에 화장실이 있나요? 흡연 구역은 어디인가요?"}]},
+        {s:"B. 사운드 — 가장 중요",q:[
+          {x:1,t:"큰 방의 <b>스피커와 앰프 모델명</b>이 어떻게 되나요? (패시브 / 액티브, 앰프 출력, <b>서브우퍼 유무</b>)"},
+          {x:1,t:"턴테이블은 어떤 <b>믹서</b>에 연결되어 있나요? 그 믹서에 <b>여유 라인 / AUX 채널(RCA 입력)</b>이 있나요?"},
+          {x:1,t:"<b>DJ 컨트롤러(Pioneer DDJ)</b>를 가져올 예정입니다. 마스터 아웃(RCA)을 믹서 또는 앰프 라인 입력에 연결해도 될까요? DI박스가 필요한가요?"},
+          {x:1,t:"이 시스템으로 <b>4시간, 댄스 가능한 볼륨</b>을 견딜 수 있나요? <b>저역이 강한 하우스 음악</b>에 무리가 없나요? 안전한 볼륨 상한은?"},
+          {x:1,t:"<b>1층으로 소리가 얼마나 새나요?</b> 이전에 DJ 파티를 한 적이 있나요? 컴플레인 이슈가 있었나요?"},
+          {x:1,t:"데시벨 제한이나 시간대별 볼륨 제한이 있나요?"},
+          {x:0,t:"볼륨은 누가 관리하나요? 제가 조절해도 되나요? 리미터가 걸려 있나요?"},
+          {x:0,t:"DDJ + 노트북을 올릴 <b>안정적인 테이블과 콘센트</b>가 있나요? 위치는?"},
+          {x:0,t:"DJ <b>모니터 스피커</b>가 별도로 있나요?"},
+          {x:0,t:"당일 <b>사운드 담당 스태프</b>가 상주하나요?"},
+          {x:0,t:"게스트나 제가 <b>바이닐을 가져와 틀어도</b> 되나요? 바늘 · 카트리지 파손 시 책임 범위는?"},
+          {x:0,t:"<b>무선 마이크</b>가 있나요? (2부 진행용)"}]},
+        {s:"C. 음료 · 음식",q:[
+          {x:1,t:"주류 · 음료는 <b>개별 주문 / 오픈바 / 티켓 / 패키지</b> 중 어떤 방식이 가능한가요?"},
+          {x:0,t:"<b>웰컴 드링크</b>를 입장 시 일괄 제공하려면 어떻게 세팅하나요?"},
+          {x:0,t:"2층 <b>전담 바텐더 / 서버</b>가 배치되나요?"},
+          {x:0,t:"30~40명 기준 추천 푸드 / 안주 세팅이 있나요?"},
+          {x:0,t:"<b>외부 음식 반입</b>이 가능한가요? 콜키지는?"}]},
+        {s:"D. 연출 · 조명 · 데코",q:[
+          {x:1,t:"조명 <b>밝기 조절</b>이 되나요? 어둡게(클럽 수준까지) 만들 수 있나요?"},
+          {x:0,t:"조명 장비가 있나요? 없다면 <b>소형 조명(LED 바, 미러볼)을 가져와 설치</b>해도 되나요?"},
+          {x:0,t:"벽 / 천장에 <b>가벼운 장식</b>을 붙여도 되나요? 허용되는 부착 방식은?"},
+          {x:0,t:"캔들 사용이 가능한가요?"},
+          {x:0,t:"<b>프로젝터 / 스크린 / TV</b>가 있나요?"},
+          {x:0,t:"입구나 1층에 파티 안내 사인을 세워도 되나요?"}]},
+        {s:"E. 운영 · 기타",q:[
+          {x:1,t:"<b>답사 가능한 날짜</b>와 담당자 연락처를 알려주실 수 있나요? 방문 시 <b>컨트롤러를 가져와 연결 테스트</b>를 하고 싶습니다."},
+          {x:0,t:"<b>사진 · 영상 촬영</b>이 가능한가요? 제한이 있나요?"},
+          {x:0,t:"외투 / 짐 보관 공간이 있나요?"},
+          {x:0,t:"주차 및 대중교통 안내 (게스트 공지용)"},
+          {x:0,t:"파손 · 분실 책임 범위와 보증금이 있나요?"}]}
+      ]}
+  ]
+};
+
+/* ================= state ================= */
+let M = clone(DEFAULT);
+let EDIT=false, LIVE=false, sb=null, pendingRemote=null, saveT=null;
+const CID = Math.random().toString(36).slice(2,10);
+let NAME = "익명";
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function getAt(p){ return p.split(".").reduce((o,k)=>o[isNaN(k)?k:+k],M); }
+function setAt(p,v){ const k=p.split("."), last=k.pop();
+  const o=k.reduce((o,x)=>o[isNaN(x)?x:+x],M); o[isNaN(last)?last:+last]=v; }
+function delAt(p){ const k=p.split("."), last=+k.pop();
+  k.reduce((o,x)=>o[isNaN(x)?x:+x],M).splice(last,1); }
+function moveAt(p,dir){ const k=p.split("."), i=+k.pop();
+  const arr=k.reduce((o,x)=>o[isNaN(x)?x:+x],M);
+  const j=i+dir; if(j<0||j>=arr.length) return;
+  [arr[i],arr[j]]=[arr[j],arr[i]];
+}
+
+const E=(p,c="")=>`<span class="ed ${c}" data-p="${p}" ${EDIT?'contenteditable="true"':''}>${getAt(p)}</span>`;
+const DEL=p=>`<button class="del" data-del="${p}" title="삭제">×</button>`;
+const ADD=(a,l)=>`<button class="add" data-add="${a}">+ ${l}</button>`;
+
+/* ================= sync ================= */
+function setStatus(cls,txt){
+  const d=document.getElementById("dot"); d.className="dot "+cls;
+  document.getElementById("stat").textContent=txt;
+}
+async function connect(){
+  if(!SUPABASE_URL || !SUPABASE_ANON_KEY){
+    setStatus("err","오프라인");
+    const b=document.getElementById("banner");
+    b.hidden=false;
+    b.innerHTML="<b>Supabase가 설정되지 않았습니다.</b> 지금은 저장·공유가 되지 않습니다. <code>index.html</code> 상단의 <code>SUPABASE_URL</code>과 <code>SUPABASE_ANON_KEY</code>를 채우세요.";
+    return;
+  }
+  sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  try{
+    const { data, error } = await sb.from("board").select("data").eq("id",BOARD_ID).maybeSingle();
+    if(error) throw error;
+    if(data && data.data) M = data.data;
+    else await sb.from("board").insert({ id:BOARD_ID, data:M, client_id:CID, updated_by:NAME });
+    render();
+    sb.channel("board-"+BOARD_ID)
+      .on("postgres_changes",
+        { event:"*", schema:"public", table:"board", filter:"id=eq."+BOARD_ID },
+        payload=>{
+          const row=payload.new;
+          if(!row || row.client_id===CID) return;   // 내가 쓴 건 무시
+          applyRemote(row.data, row.updated_by);
+        })
+      .subscribe(s=>{
+        if(s==="SUBSCRIBED"){ LIVE=true; setStatus("live","실시간 연결됨"); }
+      });
+  }catch(e){
+    console.error(e);
+    setStatus("err","연결 실패");
+    const b=document.getElementById("banner");
+    b.hidden=false;
+    b.innerHTML="<b>Supabase 연결 실패.</b> URL/키 또는 테이블·RLS 설정을 확인하세요. 콘솔에 상세 오류가 있습니다.";
+  }
+}
+function applyRemote(data, who){
+  // 누가 타이핑 중이면 커서가 튀지 않도록 blur 될 때까지 보류
+  const el=document.activeElement;
+  if(el && el.isContentEditable){ pendingRemote={data,who}; return; }
+  M=data; render();
+  setStatus("live", (who||"누군가")+" 수정함");
+  setTimeout(()=>{ if(LIVE) setStatus("live","실시간 연결됨"); },2200);
+}
+document.addEventListener("focusout",()=>{
+  if(pendingRemote){ const {data,who}=pendingRemote; pendingRemote=null; applyRemote(data,who); }
+});
+function save(){
+  if(!sb){ return; }
+  setStatus("saving","저장 중…");
+  clearTimeout(saveT);
+  saveT=setTimeout(async()=>{
+    const { error } = await sb.from("board").upsert({
+      id:BOARD_ID, data:M, client_id:CID, updated_by:NAME, updated_at:new Date().toISOString()
+    });
+    if(error){ console.error(error); setStatus("err","저장 실패"); return; }
+    setStatus(LIVE?"live":"", "저장됨");
+    setTimeout(()=>{ if(LIVE) setStatus("live","실시간 연결됨"); },1400);
+  },500);
+}
+
+/* ================= render ================= */
+function render(){
+  document.querySelector('[data-p="head.t1"]').innerHTML=M.head.t1;
+  document.querySelector('[data-p="head.t2"]').innerHTML=M.head.t2;
+  document.querySelector('[data-p="head.sub"]').innerHTML=M.head.sub;
+  document.querySelectorAll("header .ed").forEach(e=>{
+    if(EDIT) e.setAttribute("contenteditable","true"); else e.removeAttribute("contenteditable");
+  });
+  document.getElementById("chips").innerHTML =
+    M.head.chips.map((c,i)=>`<span class="chip">${E("head.chips."+i)}${DEL("head.chips."+i)}</span>`).join("")+ADD("chip","칩");
+  document.getElementById("cards").innerHTML = M.cards.map((c,i)=>cardShell(c,i)).join("");
+  wire();
+}
+function cardShell(c,i){
+  const n=String(i+1).padStart(2,"0");
+  let body="", hint="";
+  if(c.type==="steps"){ body=viewSteps(i); hint=c.items.length+" Steps"; }
+  else if(c.type==="ra"){ body=viewRA(i); hint=c.items.length+" Findings"; }
+  else if(c.type==="timeline"){ body=viewTimeline(i); hint="Click a strip"; }
+  else if(c.type==="venue"){ const r=venueCount(c); body=viewVenue(i); hint=r.done+"/"+r.total; }
+  else { body=viewCustom(i); hint="Notes"; }
+  return `<section class="card" data-open="${!!c.open}">
+    <button class="card-head" data-card="${i}">
+      <span class="num mono">${n}</span>
+      <span class="card-title">${E("cards."+i+".title")}</span>
+      <span class="card-hint mono">${hint}</span>
+      <span class="card-move">
+        <button class="mv" data-mv="cards.${i}|-1" title="위로">▲</button>
+        <button class="mv" data-mv="cards.${i}|1" title="아래로">▼</button>
+      </span>
+      ${DEL("cards."+i)}
+      <span class="toggle">+</span>
+    </button>
+    <div class="card-body">${body}</div></section>`;
+}
+
+/* ---- steps ---- */
+function viewSteps(ci){
+  const c=M.cards[ci], b=`cards.${ci}`;
+  const steps=c.items.map((s,i)=>`<li class="step" data-state="${s.s}">
+    <span class="step-i mono" data-cycle="${b}.items.${i}.s">${String(i+1).padStart(2,"0")}</span>
+    <span class="step-t">${E(b+".items."+i+".t")}</span>
+    <span class="step-d">${E(b+".items."+i+".d")}${DEL(b+".items."+i)}</span></li>`).join("");
+  const warns=(c.warns||[]).map((w,i)=>`<p>${E(b+".warns."+i)}${DEL(b+".warns."+i)}</p>`).join("");
+  return `<ul class="steps">${steps}</ul>${ADD("step|"+ci,"단계")}
+    <div class="hintline editonly">번호를 클릭하면 상태가 바뀝니다 — 기본 → 완료 → 진행 중</div>
+    <div class="warn"><div class="warn-h mono">${E(b+".warnH")}</div>${warns}${ADD("warn|"+ci,"주의")}</div>`;
+}
+/* ---- risk/asset ---- */
+function viewRA(ci){
+  const c=M.cards[ci], b=`cards.${ci}`;
+  const items=c.items.map((r,i)=>`<div class="ra-item" data-k="${r.k}">
+    <span class="ra-lab mono" data-kind="${b}.items.${i}.k">${E(b+".items."+i+".l")}</span>${DEL(b+".items."+i)}
+    <div class="ra-t">${E(b+".items."+i+".t")}</div>
+    <p class="ra-d">${E(b+".items."+i+".d")}</p>
+    <div class="ra-do mono">${E(b+".items."+i+".do")}</div></div>`).join("");
+  return `<div class="ra">${items}</div>${ADD("ra|"+ci,"항목")}
+    <div class="hintline editonly">라벨을 클릭하면 종류가 바뀝니다 — 리스크 → 자산 → 자산=리스크</div>`;
+}
+/* ---- timeline ---- */
+function meter(t,l,n,b,pi){
+  let s=""; for(let i=1;i<=5;i++) s+=`<i class="${i<=n?"on":""}" data-lv="${b}.items.${pi}.${t}|${i}"></i>`;
+  return `<div class="meter" data-type="${t}"><span class="m-lab mono">${l}</span><span class="m-bars">${s}</span></div>`;
+}
+function viewTimeline(ci){
+  const c=M.cards[ci], b=`cards.${ci}`;
+  const strips=c.items.map((p,i)=>`<div class="strip ${i===c.active?"sel":""}" data-strip="${ci}|${i}" tabindex="0">
+    <span class="s-time mono">${E(b+".items."+i+".time")}</span>
+    <span class="s-name">${E(b+".items."+i+".name")}<small>${E(b+".items."+i+".note")}</small></span>
+    <span class="meters">${meter("snd","SND",p.snd,b,i)}${meter("soc","SOC",p.soc,b,i)}</span>
+    <span class="s-bpm mono">${E(b+".items."+i+".bpm")}</span>
+    <span class="s-arrow mono">▸</span></div>`).join("");
+  return `<div class="board-note mono">
+      <span class="legend"><i class="swatch sw-a"></i> Sound — 음악 레벨</span>
+      <span class="legend"><i class="swatch sw-p"></i> Social — 대화 · 섞임</span>
+      <span>구간을 누르면 세부 계획이 열립니다</span></div>
+    <div class="board">${strips}</div>${ADD("phase|"+ci,"구간")}
+    <div class="hintline editonly">편집 모드에서 미터 막대를 클릭하면 레벨이 조정됩니다</div>
+    ${viewDetail(ci)}`;
+}
+function viewDetail(ci){
+  const c=M.cards[ci], b=`cards.${ci}`;
+  const pi=Math.min(c.active||0, c.items.length-1);
+  const p=c.items[pi]; if(!p) return "";
+  const ti=Math.min(c.activeTab?.[pi]??0, p.tabs.length-1);
+  const tab=p.tabs[ti]; if(!tab) return "";
+  const tp=`${b}.items.${pi}.tabs.${ti}`;
+  return `<div class="detail">
+    <div class="d-head">
+      <div class="d-kicker mono">${E(b+".items."+pi+".kicker")}</div>
+      <div class="d-title">${E(b+".items."+pi+".title")}</div>
+      <div class="d-sub">${E(b+".items."+pi+".sub")}${DEL(b+".items."+pi)}</div>
+      <div class="tabs">${p.tabs.map((t,i)=>`<button class="tab ${i===ti?"sel":""}" data-tab="${ci}|${pi}|${i}">${t.t}</button>`).join("")}${ADD("tab|"+ci+"|"+pi,"탭")}</div>
+    </div>
+    <div class="d-body">
+      <div class="blk-h mono editonly" style="border:0;margin-bottom:14px">탭 이름 · ${E(tp+".t")}${DEL(tp)}</div>
+      ${tab.blocks.map((bl,i)=>blockHTML(bl,tp+".blocks."+i)).join("")}
+      <div class="addrow editonly" style="margin-top:18px">
+        ${ADD("blk|"+tp+"|p","문단")}${ADD("blk|"+tp+"|ul","리스트")}${ADD("blk|"+tp+"|run","시간표")}${ADD("blk|"+tp+"|kit","칩")}${ADD("blk|"+tp+"|rule","강조")}
+      </div></div></div>`;
+}
+/* ---- blocks (shared by timeline tabs & custom cards) ---- */
+function blockHTML(b,bp){
+  if(b.ty==="rule") return `<div class="rule ${b.red?"red":""}">${E(bp+".text")}${DEL(bp)}</div>`;
+  const h=`<div class="blk-h mono">${E(bp+".h")}${DEL(bp)}</div>`;
+  let body="";
+  if(b.ty==="p")   body=b.items.map((x,i)=>`<p>${E(bp+".items."+i)}${DEL(bp+".items."+i)}</p>`).join("");
+  if(b.ty==="ul")  body=`<ul>${b.items.map((x,i)=>`<li>${E(bp+".items."+i)}${DEL(bp+".items."+i)}</li>`).join("")}</ul>`;
+  if(b.ty==="run") body=b.items.map((x,i)=>`<div class="run-r"><span class="run-t mono">${E(bp+".items."+i+".0")}</span><span class="run-d">${E(bp+".items."+i+".1")}${DEL(bp+".items."+i)}</span></div>`).join("");
+  if(b.ty==="kit") body=`<div class="kit">${b.items.map((x,i)=>`<span class="k">${E(bp+".items."+i)}${DEL(bp+".items."+i)}</span>`).join("")}</div>`;
+  return `<div class="blk">${h}${body}${ADD("item|"+bp,"줄")}</div>`;
+}
+/* ---- custom card ---- */
+function viewCustom(ci){
+  const b=`cards.${ci}`, c=M.cards[ci];
+  return `${(c.blocks||[]).map((bl,i)=>blockHTML(bl,b+".blocks."+i)).join("")}
+    <div class="addrow editonly" style="margin-top:18px">
+      ${ADD("blk|"+b+"|p","문단")}${ADD("blk|"+b+"|ul","리스트")}${ADD("blk|"+b+"|run","시간표")}${ADD("blk|"+b+"|kit","칩")}${ADD("blk|"+b+"|rule","강조")}
+    </div>`;
+}
+/* ---- venue ---- */
+function venueCount(c){
+  let total=0,done=0,star=0;
+  c.items.forEach(s=>s.q.forEach(q=>{total++; if(q.d)done++; if(q.x)star++;}));
+  return {total,done,star};
+}
+function viewVenue(ci){
+  const c=M.cards[ci], b=`cards.${ci}`, r=venueCount(c);
+  const secs=c.items.map((s,si)=>{
+    const qs=s.q.map((q,qi)=>{
+      const hide=(c.filter.star&&!q.x)||(c.filter.todo&&q.d);
+      const qp=`${b}.items.${si}.q.${qi}`;
+      return `<div class="q ${q.d?"done":""} ${hide?"hide":""}">
+        <span class="q-box ${q.d?"on":""}" data-check="${qp}.d">✓</span>
+        <span class="q-star ${q.x?"on":""}" data-star="${qp}.x">${q.x?"★":"☆"}</span>
+        <span class="q-main">
+          <span class="q-t">${E(qp+".t")}${DEL(qp)}</span>
+          <div class="q-note mono" contenteditable="true" data-note="${qp}.n">${q.n||""}</div>
+        </span></div>`;
+    }).join("");
+    return `<div class="qsec"><div class="qsec-h mono">${E(b+".items."+si+".s")}${DEL(b+".items."+si)}</div>${qs}${ADD("q|"+ci+"|"+si,"질문")}</div>`;
+  }).join("");
+  return `<div class="q-tools">
+      <button class="btn ${c.filter.star?"on":""}" data-filter="${b}.filter.star">★ 필수만</button>
+      <button class="btn ${c.filter.todo?"on":""}" data-filter="${b}.filter.todo">미확인만</button>
+      <button class="btn ghost" data-copyq="${ci}">텍스트 복사</button>
+      <span class="prog mono">답변 <b>${r.done}</b> / ${r.total} · 필수 ${r.star}</span></div>
+    ${secs}${ADD("sec|"+ci,"섹션")}
+    <div class="hintline editonly">★로 필수 표시, 체크박스로 답변 완료, 아래 줄에 답변 메모</div>`;
+}
+
+/* ================= wire ================= */
+function wire(){
+  document.querySelectorAll('.ed[contenteditable="true"]').forEach(el=>{
+    el.oninput=()=>{ setAt(el.dataset.p, el.innerHTML); save(); };
+    el.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); el.blur(); } };
+    el.onclick=e=>e.stopPropagation();
+  });
+  document.querySelectorAll("[data-note]").forEach(el=>{
+    el.oninput=()=>{ setAt(el.dataset.note, el.innerText); save(); };
+    el.onclick=e=>e.stopPropagation();
+  });
+  document.querySelectorAll(".card-head").forEach(h=>{
+    h.onclick=e=>{ if(e.target.closest(".ed")||e.target.closest(".del")||e.target.closest(".mv"))return;
+      const i=+h.dataset.card; M.cards[i].open=!M.cards[i].open; save(); render(); };
+  });
+  document.querySelectorAll("[data-mv]").forEach(b=>{
+    b.onclick=e=>{ e.stopPropagation(); const [p,d]=b.dataset.mv.split("|"); moveAt(p,+d); save(); render(); };
+  });
+  document.querySelectorAll(".strip").forEach(s=>{
+    const go=()=>{ const [ci,pi]=s.dataset.strip.split("|").map(Number);
+      M.cards[ci].active=pi; save(); render(); };
+    s.onclick=e=>{ if(e.target.closest(".ed")||e.target.closest("[data-lv]")||e.target.closest(".del"))return; go(); };
+    s.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } };
+  });
+  document.querySelectorAll("[data-tab]").forEach(t=>{
+    t.onclick=()=>{ const [ci,pi,i]=t.dataset.tab.split("|").map(Number);
+      M.cards[ci].activeTab=M.cards[ci].activeTab||{}; M.cards[ci].activeTab[pi]=i; save(); render(); };
+  });
+  if(EDIT){
+    document.querySelectorAll("[data-lv]").forEach(b=>{
+      b.onclick=e=>{ e.stopPropagation(); const [p,v]=b.dataset.lv.split("|");
+        setAt(p, getAt(p)===+v ? +v-1 : +v); save(); render(); };
+    });
+    document.querySelectorAll("[data-cycle]").forEach(el=>{
+      el.onclick=()=>{ const p=el.dataset.cycle,c=getAt(p);
+        setAt(p, c===""?"done":c==="done"?"now":""); save(); render(); };
+    });
+    document.querySelectorAll("[data-kind]").forEach(el=>{
+      el.onclick=e=>{ if(e.target.closest(".ed"))return; const p=el.dataset.kind,c=getAt(p);
+        setAt(p, c==="risk"?"asset":c==="asset"?"both":"risk"); save(); render(); };
+    });
+  }
+  document.querySelectorAll("[data-check]").forEach(el=>{ el.onclick=()=>{ const p=el.dataset.check; setAt(p,!getAt(p)); save(); render(); }; });
+  document.querySelectorAll("[data-star]").forEach(el=>{ el.onclick=()=>{ const p=el.dataset.star; setAt(p, getAt(p)?0:1); save(); render(); }; });
+  document.querySelectorAll("[data-filter]").forEach(el=>{ el.onclick=()=>{ const p=el.dataset.filter; setAt(p,!getAt(p)); save(); render(); }; });
+  document.querySelectorAll("[data-copyq]").forEach(el=>{
+    el.onclick=()=>{
+      const c=M.cards[+el.dataset.copyq], strip=h=>h.replace(/<[^>]+>/g,""), out=[];
+      c.items.forEach(s=>{ out.push("\n■ "+strip(s.s));
+        s.q.forEach((q,i)=>out.push((q.x?"★ ":"  ")+(i+1)+". "+strip(q.t))); });
+      navigator.clipboard.writeText(out.join("\n")).then(()=>{
+        el.textContent="복사됨"; setTimeout(()=>el.textContent="텍스트 복사",1500); });
+    };
+  });
+  document.querySelectorAll("[data-del]").forEach(b=>{
+    b.onclick=e=>{ e.stopPropagation(); delAt(b.dataset.del); save(); render(); };
+  });
+  document.querySelectorAll("[data-add]").forEach(b=>{
+    b.onclick=e=>{ e.stopPropagation(); doAdd(b.dataset.add); save(); render(); };
+  });
+}
+function doAdd(a){
+  const [kind,arg,arg2]=a.split("|");
+  if(kind==="chip") M.head.chips.push("새 항목 <b>내용</b>");
+  if(kind==="step") M.cards[+arg].items.push({s:"",t:"새 단계",d:"설명을 입력하세요."});
+  if(kind==="warn") M.cards[+arg].warns.push("<b>새 주의사항.</b> 내용을 입력하세요.");
+  if(kind==="ra")   M.cards[+arg].items.push({k:"risk",l:"리스크",t:"새 항목",d:"설명",do:"→ 할 일"});
+  if(kind==="phase"){
+    const c=M.cards[+arg];
+    c.items.push({time:"00:00",name:"새 구간",note:"메모",bpm:"—",snd:2,soc:2,kicker:"Part",title:"새 구간",sub:"설명",
+      tabs:[{t:"탭 1",blocks:[{ty:"ul",h:"제목",items:["내용을 입력하세요."]}]}]});
+    c.active=c.items.length-1;
+  }
+  if(kind==="tab"){
+    const c=M.cards[+arg], pi=+arg2;
+    c.items[pi].tabs.push({t:"새 탭",blocks:[{ty:"ul",h:"제목",items:["내용"]}]});
+    c.activeTab=c.activeTab||{}; c.activeTab[pi]=c.items[pi].tabs.length-1;
+  }
+  if(kind==="blk"){
+    const parent=getAt(arg);
+    const b = arg2==="rule" ? {ty:"rule",red:false,text:"<b>강조 —</b> 내용을 입력하세요."}
+      : arg2==="run" ? {ty:"run",h:"제목",items:[["00:00","내용"]]}
+      : {ty:arg2,h:"제목",items:["내용"]};
+    (parent.blocks=parent.blocks||[]).push(b);
+  }
+  if(kind==="item"){ const b=getAt(arg); b.items.push(b.ty==="run"?["00:00","내용"]:"내용"); }
+  if(kind==="q")   M.cards[+arg].items[+arg2].q.push({x:0,t:"새 질문"});
+  if(kind==="sec") M.cards[+arg].items.push({s:"새 섹션",q:[{x:0,t:"새 질문"}]});
+}
+
+/* ================= toolbar ================= */
+document.getElementById("editBtn").onclick=e=>{
+  EDIT=!EDIT;
+  document.body.classList.toggle("edit",EDIT);
+  e.target.classList.toggle("on",EDIT);
+  e.target.textContent=EDIT?"✓ 완료":"✎ 편집";
+  document.getElementById("footNote").textContent=EDIT?"편집 중 — 변경은 즉시 모두에게 반영됩니다":"URL을 아는 사람은 누구나 편집할 수 있습니다";
+  render();
+};
+document.getElementById("who").oninput=e=>{ NAME=e.target.value.trim()||"익명"; };
+document.getElementById("addCard").onclick=()=>{
+  M.cards.push({ id:"c"+Date.now(), type:"custom", title:"새 카드", open:true,
+    blocks:[{ty:"ul",h:"제목",items:["내용을 입력하세요."]}] });
+  save(); render();
+};
+document.getElementById("exportBtn").onclick=()=>{
+  const b=new Blob([JSON.stringify(M,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download="party-board.json"; a.click();
+};
+document.getElementById("resetBtn").onclick=()=>{
+  if(confirm("모두의 보드가 초기 상태로 되돌아갑니다. 계속할까요?")){
+    M=clone(DEFAULT); save(); render();
+  }
+};
+
+/* ================= boot ================= */
+render();
+connect();
+</script>
+</body>
+</html>
