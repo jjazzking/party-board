@@ -150,25 +150,30 @@
     text-transform:uppercase;border-radius:var(--radius);cursor:pointer;transition:.2s}
   .addcard:hover{border-color:var(--amber);color:var(--amber);background:rgba(240,169,59,.04)}
 
-  /* review status + comment count in card head */
-  .rev{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;padding:4px 9px;border-radius:20px;
-    border:1px solid var(--line);color:var(--muted);flex:none;cursor:pointer;transition:.18s;white-space:nowrap}
-  .rev:hover{border-color:var(--muted-2);color:var(--bone)}
-  .rev:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
-  .rev.open{color:var(--amber);border-color:var(--amber-dim);background:rgba(240,169,59,.08)}
-  .rev.done{color:var(--patina);border-color:var(--patina-dim);background:rgba(111,168,156,.10)}
-  .head-cmt{font-size:10px;color:var(--muted-2);flex:none;white-space:nowrap}
+  /* comment count in card head */
+  .head-cmt{font-family:"IBM Plex Mono",monospace;font-size:10px;flex:none;white-space:nowrap;
+    padding:3px 8px;border-radius:20px;border:1px solid var(--line)}
+  .head-cmt.has-open{color:var(--amber);border-color:var(--amber-dim);background:rgba(240,169,59,.08)}
+  .head-cmt.has-open b{color:var(--amber);font-weight:600}
+  .head-cmt.all-done{color:var(--patina);border-color:var(--patina-dim);background:rgba(111,168,156,.10)}
 
   /* free-form table card */
   .table-wrap{overflow-x:auto;border:1px solid var(--line-soft);border-radius:var(--radius)}
   table.grid{border-collapse:collapse;width:100%;font-size:14px}
-  table.grid th,table.grid td{border:1px solid var(--line-soft);padding:9px 12px;text-align:left;vertical-align:top;min-width:80px}
+  table.grid th,table.grid td{border:1px solid var(--line-soft);padding:0;text-align:left;vertical-align:top;min-width:88px}
   table.grid th{background:var(--inset);color:var(--bone);font-weight:600}
   table.grid td{color:var(--body-text)}
   table.grid tr:nth-child(even) td{background:var(--fill-soft)}
   table.grid .grid-ctrl,table.grid .grid-colctrl td{border-color:transparent;background:none;min-width:0;padding:4px;text-align:center}
   table.grid .del{position:static}
-  body.edit table.grid th .ed,body.edit table.grid td .ed{display:block;min-height:1.2em}
+  .tcell{display:block;min-height:1.3em;padding:9px 12px;outline:none;cursor:text}
+  .tcell:hover{background:var(--fill-soft)}
+  body.edit .tcell{background:none;box-shadow:none;padding:9px 12px;margin:0}
+  .tcell:focus,body.edit .tcell:focus{background:rgba(240,169,59,.12);box-shadow:inset 0 0 0 1px var(--amber)}
+  .table-tools{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .tbtn{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+    border:1px dashed var(--amber-dim);background:none;color:var(--amber);padding:6px 12px;border-radius:2px;cursor:pointer;transition:.18s}
+  .tbtn:hover{background:rgba(240,169,59,.1);border-style:solid}
 
   /* comment thread */
   .thread{margin-top:24px;border-top:1px solid var(--line-soft);padding-top:16px}
@@ -176,13 +181,26 @@
   .thread-h b{color:var(--amber)}
   .thread-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
   .cmt{border:1px solid var(--line-soft);border-left:2px solid var(--patina-dim);border-radius:var(--radius);
-    padding:10px 13px;background:var(--fill-soft)}
-  .cmt-meta{font-size:10px;color:var(--muted-2);display:flex;align-items:center;gap:8px;margin-bottom:5px}
+    padding:10px 13px;background:var(--fill-soft);transition:.2s}
+  .cmt.done{border-left-color:var(--patina);opacity:.72}
+  .cmt.done .cmt-text{color:var(--muted)}
+  .cmt-meta{font-size:10px;color:var(--muted-2);display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap}
   .cmt-meta b{color:var(--patina);font-weight:600;letter-spacing:.04em}
-  .cmt-del{margin-left:auto;border:0;background:none;color:var(--muted-2);cursor:pointer;font-size:14px;line-height:1;padding:0 2px}
+  .cmt-status{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;padding:2px 7px;border-radius:20px;
+    border:1px solid var(--amber-dim);background:rgba(240,169,59,.08);color:var(--amber);cursor:pointer;margin-left:auto;white-space:nowrap;transition:.18s}
+  .cmt-status.done{border-color:var(--patina-dim);background:rgba(111,168,156,.12);color:var(--patina)}
+  .cmt-status:hover{filter:brightness(1.15)}
+  .cmt-del{border:0;background:none;color:var(--muted-2);cursor:pointer;font-size:14px;line-height:1;padding:0 2px}
   .cmt-del:hover{color:var(--blood)}
   .cmt-text{font-size:14px;color:var(--body-text);white-space:pre-wrap;word-break:break-word}
   .cmt-empty{font-size:11px;color:var(--muted-2);letter-spacing:.04em;padding:4px 0 8px;opacity:.8}
+  /* replies */
+  .rpl-wrap{margin-top:9px;padding-left:12px;border-left:1px solid var(--line-soft);display:flex;flex-direction:column;gap:7px}
+  .rpl{padding:2px 0}
+  .rpl .cmt-text{font-size:13px}
+  .rpl-add{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+  .rpl-input{min-width:140px;font-size:12.5px;padding:6px 10px}
+  .rpl-add .thread-send{font-size:10px;padding:5px 10px}
   .thread-add{display:flex;gap:8px;flex-wrap:wrap}
   .thread-input{flex:1;min-width:180px;font-family:"IBM Plex Sans KR",sans-serif;font-size:13.5px;
     background:var(--fill);border:1px solid var(--line);color:var(--bone);border-radius:var(--radius);padding:9px 12px}
@@ -601,6 +619,15 @@ let M = clone(DEFAULT);
 let EDIT=false, LIVE=false, sb=null, pendingRemote=null, saveT=null;
 const CID = Math.random().toString(36).slice(2,10);
 let NAME = "익명";
+/* 카드 펼침 상태는 "보는 사람"만의 로컬 상태 — 저장/동기화하지 않는다 (id 기준) */
+const OPEN = new Set();
+let OPEN_SEEDED = false;
+function seedOpen(){
+  if(OPEN_SEEDED) return;
+  OPEN_SEEDED = true;
+  M.cards.forEach(c=>{ if(c.open) OPEN.add(c.id); });
+}
+function isOpen(c){ return OPEN.has(c.id); }
 
 function clone(o){ return JSON.parse(JSON.stringify(o)); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m])); }
@@ -707,15 +734,15 @@ function cardShell(c,i){
   else if(c.type==="venue"){ const r=venueCount(c); body=viewVenue(i); hint=r.done+"/"+r.total; }
   else if(c.type==="table"){ body=viewTable(i); const r=(c.rows||[]).length, cl=(c.rows&&c.rows[0]?c.rows[0].length:0); hint=r+"×"+cl+" Table"; }
   else { body=viewCustom(i); hint="Notes"; }
-  const cmtN=(c.comments||[]).length;
-  const done=c.review==="done";
-  return `<section class="card" data-open="${!!c.open}">
+  const comments=c.comments||[];
+  const cmtN=comments.length;
+  const openN=comments.filter(x=>x.status!=="done").length;
+  return `<section class="card" data-open="${isOpen(c)}">
     <button class="card-head" data-card="${i}">
       <span class="num mono">${n}</span>
       <span class="card-title">${E("cards."+i+".title")}</span>
       <span class="card-hint mono">${hint}</span>
-      ${cmtN?`<span class="head-cmt mono" title="의견 ${cmtN}개">💬 ${cmtN}</span>`:""}
-      <span class="rev ${done?"done":"open"}" role="button" tabindex="0" data-review="${i}" title="리뷰 상태 전환 — 오픈 / 완료">${done?"✓ 완료":"● 오픈"}</span>
+      ${cmtN?`<span class="head-cmt mono ${openN?"has-open":"all-done"}" title="의견 ${cmtN}개 · 미해결 ${openN}개">💬 ${cmtN}${openN?` · <b>${openN}</b> 오픈`:" · 완료"}</span>`:""}
       <span class="card-move">
         <button class="mv" data-mv="cards.${i}|-1" title="위로">▲</button>
         <button class="mv" data-mv="cards.${i}|1" title="아래로">▼</button>
@@ -734,8 +761,9 @@ function viewTable(ci){
   rows.forEach((row,r)=>{
     out+="<tr>";
     for(let cc=0; cc<ncol; cc++){
-      const tag=r===0?"th":"td";
-      out+=`<${tag}>${E(b+".rows."+r+"."+cc)}</${tag}>`;
+      const tag=r===0?"th":"td", p=b+".rows."+r+"."+cc;
+      // 표 셀은 편집 모드와 무관하게 항상 입력 가능 (협업용 데이터)
+      out+=`<${tag}><span class="ed tcell" data-p="${p}" contenteditable="true">${getAt(p)}</span></${tag}>`;
     }
     if(EDIT) out+=`<td class="grid-ctrl"><button class="del" data-del="${b}.rows.${r}" title="행 삭제">×</button></td>`;
     out+="</tr>";
@@ -746,18 +774,36 @@ function viewTable(ci){
     out+="<td></td></tr>";
   }
   out+="</table></div>";
-  out+=`<div class="addrow editonly" style="margin-top:10px">${ADD("trow|"+ci,"행")}${ADD("tcol|"+ci,"열")}</div>`;
+  // 행 추가는 편집 모드가 아니어도 가능 / 열 추가·삭제는 편집 모드 전용(.add 클래스)
+  out+=`<div class="table-tools"><button class="tbtn" data-add="trow|${ci}">+ 행</button>${ADD("tcol|"+ci,"열")}</div>`;
   return out;
 }
-/* ---- comment thread + review status (any card) ---- */
+/* ---- comment thread: per-comment open/done status + replies (any card) ---- */
+function replyHTML(ci, cm){
+  const replies=cm.replies||[];
+  const items=replies.map(rp=>`<div class="rpl">
+      <div class="cmt-meta mono"><b>${esc(rp.who||"익명")}</b><span>${fmtTime(rp.ts)}</span>
+        <button class="cmt-del" data-rdel="${ci}|${esc(cm.id)}|${esc(rp.id)}" title="삭제">×</button></div>
+      <div class="cmt-text">${esc(rp.text)}</div></div>`).join("");
+  return `<div class="rpl-wrap">${items}
+    <div class="rpl-add">
+      <input class="thread-input rpl-input" type="text" maxlength="500" placeholder="답글…" data-rinput="${ci}|${esc(cm.id)}">
+      <button class="btn thread-send" data-radd="${ci}|${esc(cm.id)}">답글</button>
+    </div></div>`;
+}
 function threadHTML(ci){
   const c=M.cards[ci];
   const comments=c.comments||[];
   const list = comments.length
-    ? comments.map(cm=>`<div class="cmt">
+    ? comments.map(cm=>{
+        const done=cm.status==="done";
+        return `<div class="cmt ${done?"done":""}">
         <div class="cmt-meta mono"><b>${esc(cm.who||"익명")}</b><span>${fmtTime(cm.ts)}</span>
+          <button class="cmt-status ${done?"done":"open"}" data-cstatus="${ci}|${esc(cm.id)}" title="상태 전환 — 오픈 / 완료">${done?"✓ 완료":"● 오픈"}</button>
           <button class="cmt-del" data-cdel="${ci}|${esc(cm.id)}" title="삭제">×</button></div>
-        <div class="cmt-text">${esc(cm.text)}</div></div>`).join("")
+        <div class="cmt-text">${esc(cm.text)}</div>
+        ${replyHTML(ci, cm)}</div>`;
+      }).join("")
     : `<div class="cmt-empty mono">아직 의견이 없습니다. 편집 모드가 아니어도 누구나 의견을 남길 수 있어요.</div>`;
   return `<div class="thread">
     <div class="thread-h mono"><span>의견 · <b>${comments.length}</b></span></div>
@@ -895,14 +941,11 @@ function wire(){
     el.onclick=e=>e.stopPropagation();
   });
   document.querySelectorAll(".card-head").forEach(h=>{
-    h.onclick=e=>{ if(e.target.closest(".ed")||e.target.closest(".del")||e.target.closest(".mv")||e.target.closest(".rev"))return;
-      const i=+h.dataset.card; M.cards[i].open=!M.cards[i].open; save(); render(); };
-  });
-  document.querySelectorAll("[data-review]").forEach(el=>{
-    const toggle=e=>{ e.stopPropagation(); const ci=+el.dataset.review, c=M.cards[ci];
-      c.review = c.review==="done" ? "open" : "done"; save(); render(); };
-    el.onclick=toggle;
-    el.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ toggle(e); } };
+    h.onclick=e=>{ if(e.target.closest(".ed")||e.target.closest(".del")||e.target.closest(".mv"))return;
+      // 펼침은 로컬 상태만 변경 — 저장/브로드캐스트 없이 이 사람 화면에서만 열림
+      const c=M.cards[+h.dataset.card];
+      if(OPEN.has(c.id)) OPEN.delete(c.id); else OPEN.add(c.id);
+      renderOpenState(); };
   });
   document.querySelectorAll("[data-delcol]").forEach(b=>{
     b.onclick=e=>{ e.stopPropagation(); const [ci,cc]=b.dataset.delcol.split("|").map(Number);
@@ -918,6 +961,23 @@ function wire(){
   document.querySelectorAll("[data-cdel]").forEach(b=>{
     b.onclick=e=>{ e.stopPropagation(); const [ci,id]=b.dataset.cdel.split("|");
       const c=M.cards[+ci]; c.comments=(c.comments||[]).filter(x=>x.id!==id); save(); render(); };
+  });
+  document.querySelectorAll("[data-cstatus]").forEach(b=>{
+    b.onclick=e=>{ e.stopPropagation(); const [ci,id]=b.dataset.cstatus.split("|");
+      const cm=(M.cards[+ci].comments||[]).find(x=>x.id===id); if(!cm) return;
+      cm.status = cm.status==="done" ? "open" : "done"; save(); render(); };
+  });
+  document.querySelectorAll("[data-radd]").forEach(btn=>{
+    btn.onclick=e=>{ e.stopPropagation(); const [ci,id]=btn.dataset.radd.split("|"); addReply(+ci,id); };
+  });
+  document.querySelectorAll("[data-rinput]").forEach(inp=>{
+    inp.onclick=e=>e.stopPropagation();
+    inp.onkeydown=e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); const [ci,id]=inp.dataset.rinput.split("|"); addReply(+ci,id); } };
+  });
+  document.querySelectorAll("[data-rdel]").forEach(b=>{
+    b.onclick=e=>{ e.stopPropagation(); const [ci,cid,rid]=b.dataset.rdel.split("|");
+      const cm=(M.cards[+ci].comments||[]).find(x=>x.id===cid); if(!cm) return;
+      cm.replies=(cm.replies||[]).filter(x=>x.id!==rid); save(); render(); };
   });
   document.querySelectorAll("[data-mv]").forEach(b=>{
     b.onclick=e=>{ e.stopPropagation(); const [p,d]=b.dataset.mv.split("|"); moveAt(p,+d); save(); render(); };
@@ -1002,8 +1062,22 @@ function addComment(ci){
   if(!inp) return;
   const text=inp.value.trim(); if(!text) return;
   const c=M.cards[ci];
-  (c.comments=c.comments||[]).push({ id:uid("m"), who:NAME, text, ts:Date.now() });
+  (c.comments=c.comments||[]).push({ id:uid("m"), who:NAME, text, ts:Date.now(), status:"open", replies:[] });
   inp.value=""; save(); render();
+}
+function addReply(ci, cid){
+  const inp=document.querySelector('[data-rinput="'+ci+'|'+cid+'"]');
+  if(!inp) return;
+  const text=inp.value.trim(); if(!text) return;
+  const cm=(M.cards[ci].comments||[]).find(x=>x.id===cid); if(!cm) return;
+  (cm.replies=cm.replies||[]).push({ id:uid("r"), who:NAME, text, ts:Date.now() });
+  inp.value=""; save(); render();
+}
+/* 카드 펼침 상태만 즉시 반영 — 전체 재렌더/저장 없이 이 사람 화면에서만 */
+function renderOpenState(){
+  document.querySelectorAll("#cards > .card").forEach((sec,i)=>{
+    if(M.cards[i]) sec.setAttribute("data-open", OPEN.has(M.cards[i].id));
+  });
 }
 
 /* ================= theme ================= */
@@ -1038,12 +1112,14 @@ document.getElementById("editBtn").onclick=e=>{
 };
 document.getElementById("who").oninput=e=>{ NAME=e.target.value.trim()||"익명"; };
 document.getElementById("addCardMemo").onclick=()=>{
-  M.cards.push({ id:"c"+Date.now(), type:"custom", title:"새 메모 카드", open:true,
+  const id="c"+Date.now(); OPEN.add(id);
+  M.cards.push({ id, type:"custom", title:"새 메모 카드", open:true,
     blocks:[{ty:"ul",h:"제목",items:["내용을 입력하세요."]}] });
   save(); render();
 };
 document.getElementById("addCardTable").onclick=()=>{
-  M.cards.push({ id:"c"+Date.now(), type:"table", title:"새 표 카드", open:true,
+  const id="c"+Date.now(); OPEN.add(id);
+  M.cards.push({ id, type:"table", title:"새 표 카드", open:true,
     rows:[["항목","내용"],["",""]] });
   save(); render();
 };
@@ -1053,11 +1129,13 @@ document.getElementById("exportBtn").onclick=()=>{
 };
 document.getElementById("resetBtn").onclick=()=>{
   if(confirm("모두의 보드가 초기 상태로 되돌아갑니다. 계속할까요?")){
-    M=clone(DEFAULT); save(); render();
+    M=clone(DEFAULT); OPEN.clear(); M.cards.forEach(c=>{ if(c.open) OPEN.add(c.id); });
+    save(); render();
   }
 };
 
 /* ================= boot ================= */
+seedOpen();
 render();
 connect();
 </script>
