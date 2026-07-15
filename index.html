@@ -791,13 +791,40 @@ function ytId(u){
    활성 인덱스(refActive)는 로컬 전용이라 저장/동기화하지 않는다. */
 function normalizeRefs(){
   if(Array.isArray(M.head.refs)) return M.head.refs;
-  // 기존 단일 head.youtube 값을 첫 레퍼런스로 이관
-  M.head.refs = M.head.youtube ? [{ id:uid("y"), url:M.head.youtube, title:"레퍼런스 1" }] : [];
+  // 기존 단일 head.youtube 값을 첫 레퍼런스로 이관 (제목은 자동 조회 대상)
+  M.head.refs = M.head.youtube ? [{ id:uid("y"), url:M.head.youtube, title:"레퍼런스 1", titleAuto:true }] : [];
   return M.head.refs;
 }
 function clampActive(){
   const n=(M.head.refs||[]).length;
   refActive = n ? Math.min(Math.max(refActive,0), n-1) : 0;
+}
+/* 실제 유튜브 제목 자동 조회 — oEmbed(공개, API 키 불필요). 실패 시 조용히 수동 라벨 유지. */
+const ytTried = new Set();
+async function fetchYtTitle(id){
+  const api="https://www.youtube.com/oembed?url="+encodeURIComponent("https://www.youtube.com/watch?v="+id)+"&format=json";
+  try{
+    const r=await fetch(api,{mode:"cors"});
+    if(!r.ok) return null;
+    const j=await r.json();
+    return (j && j.title) ? String(j.title) : null;
+  }catch(e){ return null; }
+}
+function maybeAutoTitle(refs){
+  refs.forEach(ref=>{
+    const id=ytId(ref.url);
+    if(!id || ref.titleAuto===false) return;               // 사용자가 직접 정한 제목은 건드리지 않음
+    const isDefault = !ref.title || /^레퍼런스\s*\d+$/.test(ref.title);
+    if(!isDefault) return;                                   // 이미 실제 제목이 채워져 있음
+    const key=ref.id+"|"+id;
+    if(ytTried.has(key)) return;                             // 세션당 한 번만 시도
+    ytTried.add(key);
+    fetchYtTitle(id).then(t=>{
+      if(!t) return;
+      const rf=(M.head.refs||[]).find(x=>x.id===ref.id);
+      if(rf && rf.titleAuto!==false && ytId(rf.url)===id){ rf.title=t; rf.titleAuto=true; save(); renderYT(); }
+    });
+  });
 }
 function viewRefs(){
   const refs=normalizeRefs(); clampActive();
@@ -850,7 +877,10 @@ function renderYT(){
   });
   // 제목 편집칸(.ed) · 이동/삭제 버튼은 wire()에서 공통 처리되지만, 이 영역은 wire() 밖이라 여기서 연결
   wrap.querySelectorAll('.ed[contenteditable="true"]').forEach(el=>{
-    el.oninput=()=>{ setAt(el.dataset.p, el.innerHTML); save(); };
+    el.oninput=()=>{ setAt(el.dataset.p, el.innerHTML);
+      const m=el.dataset.p.match(/^head\.refs\.(\d+)\.title$/);
+      if(m && M.head.refs[+m[1]]) M.head.refs[+m[1]].titleAuto=false;   // 직접 수정하면 자동 조회 대상에서 제외
+      save(); };
     el.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); el.blur(); } };
     el.onclick=e=>e.stopPropagation();
   });
@@ -862,9 +892,10 @@ function renderYT(){
   });
   const add=document.getElementById("refAdd");
   if(add) add.onclick=()=>{
-    normalizeRefs().push({ id:uid("y"), url:"", title:"레퍼런스 "+(M.head.refs.length+1) });
+    normalizeRefs().push({ id:uid("y"), url:"", title:"레퍼런스 "+(M.head.refs.length+1), titleAuto:true });
     save(); renderYT();
   };
+  maybeAutoTitle(M.head.refs||[]);   // 링크가 있는 항목의 실제 제목을 자동 조회
 }
 function cardShell(c,i){
   const n=String(i+1).padStart(2,"0");
