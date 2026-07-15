@@ -104,6 +104,23 @@
     display:inline-flex;align-items:center}
   .chip b{color:var(--bone);font-weight:500}
 
+  /* YouTube 무드 레퍼런스 */
+  .ytwrap{margin-top:28px;max-width:600px}
+  .yt-frame{position:relative;width:100%;padding-top:56.25%;border:1px solid var(--line-soft);
+    border-radius:var(--radius);overflow:hidden;background:#000;box-shadow:0 10px 40px -20px rgba(0,0,0,.7)}
+  .yt-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .yt-empty{display:flex;align-items:center;justify-content:center;min-height:120px;text-align:center;
+    border:1px dashed var(--line);border-radius:var(--radius);background:var(--fill-soft);
+    color:var(--muted-2);font-size:11px;letter-spacing:.1em;padding:20px}
+  .yt-edit{display:flex;gap:8px;align-items:center;margin-top:10px}
+  .yt-lab{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted-2);flex:none}
+  .yt-input{flex:1;min-width:0;font-family:"IBM Plex Mono",monospace;font-size:12px;background:var(--fill);
+    border:1px solid var(--line);color:var(--bone);border-radius:var(--radius);padding:8px 11px}
+  .yt-input:focus{outline:none;border-color:var(--amber)}
+  .yt-clear{flex:none;width:26px;height:26px;border:1px solid var(--line);background:none;color:var(--muted-2);
+    border-radius:var(--radius);cursor:pointer;font-size:14px;line-height:1}
+  .yt-clear:hover{border-color:var(--blood);color:var(--blood)}
+
   .cards{margin-top:44px;display:flex;flex-direction:column;gap:14px}
   .card{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden;transition:.25s}
   .card[data-open="true"]{border-color:var(--line);background:var(--panel-2)}
@@ -351,6 +368,7 @@
     <h1><span class="ed" data-p="head.t1"></span><span class="accent ed" data-p="head.t2"></span></h1>
     <p class="sub ed" data-p="head.sub"></p>
     <div class="chips" id="chips"></div>
+    <div class="ytwrap" id="ytwrap"></div>
   </header>
 
   <main class="cards" id="cards"></main>
@@ -380,7 +398,8 @@ const DEFAULT = {
   head:{
     t1:"딥하우스 라운지 파티", t2:"기획 보드",
     sub:"친구 · 지인 · 지인의 지인이 좋은 음악 아래에서 섞이는 소셜 파티. 카드를 눌러 펼치고, 타임라인의 각 구간을 눌러 세부 계획을 확인하세요. 편집 모드를 켜면 모두가 실시간으로 함께 고칠 수 있습니다.",
-    chips:["게스트 <b>30–40</b>","런타임 <b>19:00 – 23:00</b>","사운드 <b>DDJ + 빈티지 스피커 / 바이닐</b>","장르 <b>DEEP HOUSE · UKG · K-POP EDITS</b>","공간 <b>2F 큰 방 + 작은 방</b>"]
+    chips:["게스트 <b>30–40</b>","런타임 <b>19:00 – 23:00</b>","사운드 <b>DDJ + 빈티지 스피커 / 바이닐</b>","장르 <b>DEEP HOUSE · UKG · K-POP EDITS</b>","공간 <b>2F 큰 방 + 작은 방</b>"],
+    youtube:""
   },
   cards:[
     { id:"steps", type:"steps", title:"기획 순서 — 프로들은 이렇게 굴린다", open:false,
@@ -689,7 +708,7 @@ async function connect(){
 function applyRemote(data, who){
   // 누가 타이핑 중이면 커서가 튀지 않도록 blur 될 때까지 보류
   const el=document.activeElement;
-  if(el && (el.isContentEditable || el.classList.contains("thread-input"))){ pendingRemote={data,who}; return; }
+  if(el && (el.isContentEditable || el.classList.contains("thread-input") || el.classList.contains("yt-input"))){ pendingRemote={data,who}; return; }
   M=data; render();
   setStatus("live", (who||"누군가")+" 수정함");
   setTimeout(()=>{ if(LIVE) setStatus("live","실시간 연결됨"); },2200);
@@ -721,8 +740,41 @@ function render(){
   });
   document.getElementById("chips").innerHTML =
     M.head.chips.map((c,i)=>`<span class="chip">${E("head.chips."+i)}${DEL("head.chips."+i)}</span>`).join("")+ADD("chip","칩");
+  renderYT();
   document.getElementById("cards").innerHTML = M.cards.map((c,i)=>cardShell(c,i)).join("");
   wire();
+}
+/* ---- YouTube 무드 레퍼런스 (편집 모드에서 링크 변경) ---- */
+function ytId(u){
+  if(!u) return "";
+  u=String(u).trim();
+  const m=u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|[?&]v=)([A-Za-z0-9_-]{11})/);
+  if(m) return m[1];
+  if(/^[A-Za-z0-9_-]{11}$/.test(u)) return u;   // 영상 ID만 붙여넣은 경우
+  return "";
+}
+function viewYT(){
+  const url=M.head.youtube||"", id=ytId(url);
+  const media = id
+    ? `<div class="yt-frame"><iframe src="https://www.youtube-nocookie.com/embed/${id}" title="파티 무드 레퍼런스" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`
+    : `<div class="yt-empty mono">▶ 파티 무드 레퍼런스 · ${EDIT?"아래 칸에 유튜브 링크를 붙여넣으세요":"편집 모드에서 유튜브 링크를 넣을 수 있어요"}</div>`;
+  const editor = EDIT
+    ? `<div class="yt-edit"><span class="yt-lab mono">YouTube</span><input class="yt-input" id="ytInput" type="text" placeholder="유튜브 링크 또는 영상 ID" value="${esc(url)}">${url?`<button class="yt-clear" id="ytClear" title="지우기">×</button>`:""}</div>`
+    : "";
+  return media+editor;
+}
+function renderYT(){
+  const wrap=document.getElementById("ytwrap");
+  if(!wrap) return;
+  wrap.innerHTML=viewYT();
+  const yi=document.getElementById("ytInput");
+  if(yi){
+    yi.oninput=()=>{ setAt("head.youtube", yi.value.trim()); save(); };
+    yi.onchange=()=>renderYT();                                   // 링크 확정 시 임베드 갱신
+    yi.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); yi.blur(); renderYT(); } };
+  }
+  const yc=document.getElementById("ytClear");
+  if(yc) yc.onclick=()=>{ setAt("head.youtube",""); save(); renderYT(); };
 }
 function cardShell(c,i){
   const n=String(i+1).padStart(2,"0");
