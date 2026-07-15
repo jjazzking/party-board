@@ -105,21 +105,53 @@
   .chip b{color:var(--bone);font-weight:500}
 
   /* YouTube 무드 레퍼런스 */
-  .ytwrap{margin-top:28px;max-width:600px}
+  .ytwrap{margin-top:28px}
+  .yt-layout{display:flex;flex-direction:column;gap:14px}
+  .yt-main{min-width:0}
   .yt-frame{position:relative;width:100%;padding-top:56.25%;border:1px solid var(--line-soft);
     border-radius:var(--radius);overflow:hidden;background:#000;box-shadow:0 10px 40px -20px rgba(0,0,0,.7)}
   .yt-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
   .yt-empty{display:flex;align-items:center;justify-content:center;min-height:120px;text-align:center;
     border:1px dashed var(--line);border-radius:var(--radius);background:var(--fill-soft);
     color:var(--muted-2);font-size:11px;letter-spacing:.1em;padding:20px}
-  .yt-edit{display:flex;gap:8px;align-items:center;margin-top:10px}
-  .yt-lab{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted-2);flex:none}
-  .yt-input{flex:1;min-width:0;font-family:"IBM Plex Mono",monospace;font-size:12px;background:var(--fill);
+  .yt-now{display:flex;align-items:baseline;gap:9px;margin-top:11px}
+  .yt-now-lab{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--amber);flex:none}
+  .yt-now-t{font-size:14px;color:var(--bone);font-weight:500}
+  /* playlist */
+  .yt-side{display:flex;flex-direction:column;gap:8px}
+  .yt-side-h{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted-2)}
+  .yt-side-h b{color:var(--amber)}
+  .pl-list{display:flex;flex-direction:column;gap:6px}
+  .pl-item{display:flex;align-items:center;gap:10px;padding:6px;border:1px solid var(--line-soft);
+    border-radius:var(--radius);background:var(--fill-soft);cursor:pointer;transition:.16s}
+  .pl-item:hover{border-color:var(--muted-2);background:var(--fill)}
+  .pl-item:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  .pl-item.sel{border-color:var(--amber);background:linear-gradient(90deg,rgba(240,169,59,.14),rgba(240,169,59,.03))}
+  .pl-thumb{position:relative;width:76px;height:43px;flex:none;border-radius:2px;overflow:hidden;
+    background:var(--inset);border:1px solid var(--line-soft)}
+  .pl-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .pl-ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted-2);font-size:12px}
+  .pl-meta{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+  .pl-title{font-size:13px;color:var(--bone);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pl-item.sel .pl-title{color:var(--amber)}
+  body.edit .pl-title{white-space:normal;overflow:visible}
+  .pl-url{font-size:11px;padding:5px 8px}
+  .pl-dot{flex:none;color:var(--amber);font-size:10px}
+  .pl-ctrl{flex:none;display:flex;align-items:center;gap:3px}
+  .pl-empty{font-size:11px;color:var(--muted-2);letter-spacing:.06em;padding:10px 4px}
+  .pl-add{margin-top:2px;padding:9px;border:1px dashed var(--amber-dim);background:none;color:var(--amber);
+    font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    border-radius:var(--radius);cursor:pointer;transition:.18s}
+  .pl-add:hover{background:rgba(240,169,59,.1);border-style:solid}
+  .yt-input{min-width:0;font-family:"IBM Plex Mono",monospace;font-size:12px;background:var(--fill);
     border:1px solid var(--line);color:var(--bone);border-radius:var(--radius);padding:8px 11px}
   .yt-input:focus{outline:none;border-color:var(--amber)}
-  .yt-clear{flex:none;width:26px;height:26px;border:1px solid var(--line);background:none;color:var(--muted-2);
-    border-radius:var(--radius);cursor:pointer;font-size:14px;line-height:1}
-  .yt-clear:hover{border-color:var(--blood);color:var(--blood)}
+  @media(min-width:760px){
+    .yt-layout{flex-direction:row;align-items:flex-start}
+    .yt-main{flex:1 1 60%}
+    .yt-side{flex:1 1 40%;max-width:360px}
+    .pl-list{max-height:340px;overflow-y:auto;padding-right:2px}
+  }
 
   .cards{margin-top:44px;display:flex;flex-direction:column;gap:14px}
   .card{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden;transition:.25s}
@@ -399,7 +431,7 @@ const DEFAULT = {
     t1:"딥하우스 라운지 파티", t2:"기획 보드",
     sub:"친구 · 지인 · 지인의 지인이 좋은 음악 아래에서 섞이는 소셜 파티. 카드를 눌러 펼치고, 타임라인의 각 구간을 눌러 세부 계획을 확인하세요. 편집 모드를 켜면 모두가 실시간으로 함께 고칠 수 있습니다.",
     chips:["게스트 <b>30–40</b>","런타임 <b>19:00 – 23:00</b>","사운드 <b>DDJ + 빈티지 스피커 / 바이닐</b>","장르 <b>DEEP HOUSE · UKG · K-POP EDITS</b>","공간 <b>2F 큰 방 + 작은 방</b>"],
-    youtube:""
+    refs:[]
   },
   cards:[
     { id:"steps", type:"steps", title:"기획 순서 — 프로들은 이렇게 굴린다", open:false,
@@ -639,6 +671,8 @@ const CID = Math.random().toString(36).slice(2,10);
 let NAME = "익명";
 /* 카드 펼침 상태는 "보는 사람"만의 로컬 상태 — 저장/동기화하지 않는다 (id 기준) */
 const OPEN = new Set();
+/* 재생 중인 레퍼런스도 "보는 사람"만의 로컬 상태 — 저장/동기화하지 않는다 */
+let refActive = 0;
 let OPEN_SEEDED = false;
 function seedOpen(){
   if(OPEN_SEEDED) return;
@@ -753,28 +787,84 @@ function ytId(u){
   if(/^[A-Za-z0-9_-]{11}$/.test(u)) return u;   // 영상 ID만 붙여넣은 경우
   return "";
 }
-function viewYT(){
-  const url=M.head.youtube||"", id=ytId(url);
-  const media = id
-    ? `<div class="yt-frame"><iframe src="https://www.youtube-nocookie.com/embed/${id}" title="파티 무드 레퍼런스" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`
-    : `<div class="yt-empty mono">▶ 파티 무드 레퍼런스 · ${EDIT?"아래 칸에 유튜브 링크를 붙여넣으세요":"편집 모드에서 유튜브 링크를 넣을 수 있어요"}</div>`;
-  const editor = EDIT
-    ? `<div class="yt-edit"><span class="yt-lab mono">YouTube</span><input class="yt-input" id="ytInput" type="text" placeholder="유튜브 링크 또는 영상 ID" value="${esc(url)}">${url?`<button class="yt-clear" id="ytClear" title="지우기">×</button>`:""}</div>`
-    : "";
-  return media+editor;
+/* 여러 레퍼런스를 head.refs 배열로 관리 — 메인엔 활성 1개만, 오른쪽에 플레이리스트.
+   활성 인덱스(refActive)는 로컬 전용이라 저장/동기화하지 않는다. */
+function normalizeRefs(){
+  if(Array.isArray(M.head.refs)) return M.head.refs;
+  // 기존 단일 head.youtube 값을 첫 레퍼런스로 이관
+  M.head.refs = M.head.youtube ? [{ id:uid("y"), url:M.head.youtube, title:"레퍼런스 1" }] : [];
+  return M.head.refs;
+}
+function clampActive(){
+  const n=(M.head.refs||[]).length;
+  refActive = n ? Math.min(Math.max(refActive,0), n-1) : 0;
+}
+function viewRefs(){
+  const refs=normalizeRefs(); clampActive();
+  const cur=refs[refActive], curId=cur?ytId(cur.url):"";
+  // 메인 플레이어
+  const player = curId
+    ? `<div class="yt-frame"><iframe src="https://www.youtube-nocookie.com/embed/${curId}" title="파티 무드 레퍼런스" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`
+    : `<div class="yt-empty mono">▶ 파티 무드 레퍼런스 · ${refs.length?(EDIT?"오른쪽 항목에 유튜브 링크를 넣으세요":"편집 모드에서 링크를 넣을 수 있어요"):(EDIT?"오른쪽에서 레퍼런스를 추가하세요":"편집 모드에서 레퍼런스를 추가할 수 있어요")}</div>`;
+  const nowTitle = cur ? `<div class="yt-now"><span class="yt-now-lab mono">Now</span><span class="yt-now-t">${esc(cur.title||"제목 없음")}</span></div>` : "";
+  // 플레이리스트
+  const rows = refs.map((r,i)=>{
+    const rid=ytId(r.url);
+    const thumb = `<span class="pl-thumb">${rid?`<img src="https://img.youtube.com/vi/${rid}/mqdefault.jpg" alt="" loading="lazy" onerror="this.remove()">`:""}<i class="pl-ph">▶</i></span>`;
+    const meta = EDIT
+      ? `<span class="pl-meta"><span class="pl-title">${E("head.refs."+i+".title")}</span>
+           <input class="yt-input pl-url" type="text" data-refurl="${i}" placeholder="유튜브 링크 또는 영상 ID" value="${esc(r.url||"")}"></span>`
+      : `<span class="pl-meta"><span class="pl-title">${esc(r.title||"제목 없음")}</span></span>`;
+    const ctrl = EDIT
+      ? `<span class="pl-ctrl"><button class="mv" data-mv="head.refs.${i}|-1" title="위로">▲</button><button class="mv" data-mv="head.refs.${i}|1" title="아래로">▼</button>${DEL("head.refs."+i)}</span>`
+      : (i===refActive?`<span class="pl-dot" title="재생 중">●</span>`:"");
+    return `<div class="pl-item ${i===refActive?"sel":""}" data-ref="${i}" tabindex="0" role="button">${thumb}${meta}${ctrl}</div>`;
+  }).join("");
+  const emptyHint = refs.length?"":`<div class="pl-empty mono">${EDIT?"아래 버튼으로 레퍼런스를 추가하세요":"아직 레퍼런스가 없습니다"}</div>`;
+  const addBtn = EDIT?`<button class="pl-add" id="refAdd">+ 레퍼런스 추가</button>`:"";
+  return `<div class="yt-layout">
+      <div class="yt-main">${player}${nowTitle}</div>
+      <div class="yt-side">
+        <div class="yt-side-h mono">플레이리스트 · <b>${refs.length}</b></div>
+        <div class="pl-list">${rows}${emptyHint}</div>
+        ${addBtn}
+      </div>
+    </div>`;
 }
 function renderYT(){
   const wrap=document.getElementById("ytwrap");
   if(!wrap) return;
-  wrap.innerHTML=viewYT();
-  const yi=document.getElementById("ytInput");
-  if(yi){
-    yi.oninput=()=>{ setAt("head.youtube", yi.value.trim()); save(); };
-    yi.onchange=()=>renderYT();                                   // 링크 확정 시 임베드 갱신
-    yi.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); yi.blur(); renderYT(); } };
-  }
-  const yc=document.getElementById("ytClear");
-  if(yc) yc.onclick=()=>{ setAt("head.youtube",""); save(); renderYT(); };
+  wrap.innerHTML=viewRefs();
+  // 레퍼런스 항목 선택 = 로컬 전환 (저장/동기화 없음)
+  wrap.querySelectorAll("[data-ref]").forEach(el=>{
+    const go=()=>{ refActive=+el.dataset.ref; renderYT(); };
+    el.onclick=e=>{ if(e.target.closest(".ed")||e.target.closest(".pl-url")||e.target.closest(".mv")||e.target.closest(".del"))return; go(); };
+    el.onkeydown=e=>{ if(e.target!==el)return; if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } };
+  });
+  // URL 입력: 저장은 즉시, 임베드/썸네일 갱신은 확정(blur/Enter) 시
+  wrap.querySelectorAll("[data-refurl]").forEach(inp=>{
+    inp.onclick=e=>e.stopPropagation();
+    inp.oninput=()=>{ setAt("head.refs."+inp.dataset.refurl+".url", inp.value.trim()); save(); };
+    inp.onchange=()=>renderYT();
+    inp.onkeydown=e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); inp.blur(); renderYT(); } };
+  });
+  // 제목 편집칸(.ed) · 이동/삭제 버튼은 wire()에서 공통 처리되지만, 이 영역은 wire() 밖이라 여기서 연결
+  wrap.querySelectorAll('.ed[contenteditable="true"]').forEach(el=>{
+    el.oninput=()=>{ setAt(el.dataset.p, el.innerHTML); save(); };
+    el.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); el.blur(); } };
+    el.onclick=e=>e.stopPropagation();
+  });
+  wrap.querySelectorAll("[data-mv]").forEach(b=>{
+    b.onclick=e=>{ e.stopPropagation(); const [p,d]=b.dataset.mv.split("|"); moveAt(p,+d); save(); clampActive(); renderYT(); };
+  });
+  wrap.querySelectorAll("[data-del]").forEach(b=>{
+    b.onclick=e=>{ e.stopPropagation(); delAt(b.dataset.del); save(); clampActive(); renderYT(); };
+  });
+  const add=document.getElementById("refAdd");
+  if(add) add.onclick=()=>{
+    normalizeRefs().push({ id:uid("y"), url:"", title:"레퍼런스 "+(M.head.refs.length+1) });
+    save(); renderYT();
+  };
 }
 function cardShell(c,i){
   const n=String(i+1).padStart(2,"0");
