@@ -153,6 +153,51 @@
     .pl-list{max-height:340px;overflow-y:auto;padding-right:2px}
   }
 
+  /* ===== 열린 논의 · 회의 공간 (카드 영역과 구분되는 별도 존) ===== */
+  .forum{margin-top:40px;border:1px solid var(--patina-dim);border-radius:var(--radius);
+    background:
+      linear-gradient(180deg, rgba(111,168,156,.10), rgba(111,168,156,.03) 120px, transparent 240px),
+      var(--panel);
+    padding:20px 20px 22px;position:relative;overflow:hidden}
+  .forum::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--patina)}
+  .forum-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .forum-title{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--patina);font-weight:600}
+  .forum-count{font-size:10px;letter-spacing:.1em;color:var(--muted-2);margin-left:auto}
+  .forum-count b{color:var(--patina)}
+  .forum-desc{font-size:11px;letter-spacing:.02em;color:var(--muted);margin:8px 0 16px;line-height:1.6}
+  .forum-list{display:flex;flex-direction:column;gap:12px}
+  .forum-empty{font-size:12px;color:var(--muted-2);letter-spacing:.04em;padding:14px 0;text-align:center;
+    border:1px dashed var(--line);border-radius:var(--radius)}
+  .forum-add{margin-top:14px;width:100%;padding:12px;border:1px dashed var(--patina-dim);background:rgba(111,168,156,.05);
+    color:var(--patina);font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    border-radius:var(--radius);cursor:pointer;transition:.18s}
+  .forum-add:hover{background:rgba(111,168,156,.12);border-style:solid}
+  /* 개별 안건 */
+  .topic{border:1px solid var(--line-soft);border-left:2px solid var(--patina);border-radius:var(--radius);
+    background:var(--panel-2);padding:15px 16px;transition:.2s}
+  .topic.done{border-left-color:var(--muted-2);opacity:.72}
+  .topic-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .topic-tag{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-2);flex:none}
+  .topic-subject{font-family:"Black Han Sans",sans-serif;font-weight:400;font-size:17px;color:var(--bone);
+    flex:1;min-width:120px;outline:none;border-radius:2px}
+  .topic-subject:focus{box-shadow:inset 0 0 0 1px var(--patina);background:rgba(111,168,156,.06)}
+  .topic.done .topic-subject{text-decoration:line-through;color:var(--muted)}
+  .dstatus{flex:none;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;padding:3px 9px;border-radius:20px;
+    border:1px solid var(--amber-dim);background:rgba(240,169,59,.08);color:var(--amber);cursor:pointer;white-space:nowrap;transition:.18s}
+  .dstatus.done{border-color:var(--patina-dim);background:rgba(111,168,156,.12);color:var(--patina)}
+  .dstatus:hover{filter:brightness(1.15)}
+  .topic-del{flex:none;border:0;background:none;color:var(--muted-2);cursor:pointer;font-size:15px;line-height:1;padding:0 2px}
+  .topic-del:hover{color:var(--blood)}
+  .topic-by{font-size:10px;letter-spacing:.06em;color:var(--muted-2);margin:7px 0 10px}
+  .topic-by b{color:var(--patina);font-weight:600}
+  .topic-body{font-size:14px;color:var(--body-text);line-height:1.65;white-space:pre-wrap;word-break:break-word;
+    outline:none;border-radius:2px;padding:6px 8px;margin:0 -8px;min-height:1.6em;background:var(--fill-soft)}
+  .topic-body:hover{background:var(--fill)}
+  .topic-body:focus{background:rgba(111,168,156,.07);box-shadow:inset 0 0 0 1px var(--patina-dim)}
+  .topic-body:empty::before{content:attr(data-ph);color:var(--muted-2);opacity:.7}
+  .topic-thread{margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft)}
+  .topic-cmts{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+
   .cards{margin-top:44px;display:flex;flex-direction:column;gap:14px}
   .card{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--radius);overflow:hidden;transition:.25s}
   .card[data-open="true"]{border-color:var(--line);background:var(--panel-2)}
@@ -402,6 +447,8 @@
     <div class="chips" id="chips"></div>
     <div class="ytwrap" id="ytwrap"></div>
   </header>
+
+  <section class="forum" id="forum" aria-label="열린 논의 · 회의"></section>
 
   <main class="cards" id="cards"></main>
   <div class="addcard-row editonly">
@@ -661,7 +708,8 @@ const DEFAULT = {
           {x:0,t:"주차 및 대중교통 안내 (게스트 공지용)"},
           {x:0,t:"파손 · 분실 책임 범위와 보증금이 있나요?"}]}
       ]}
-  ]
+  ],
+  discussions:[]
 };
 
 /* ================= state ================= */
@@ -775,8 +823,90 @@ function render(){
   document.getElementById("chips").innerHTML =
     M.head.chips.map((c,i)=>`<span class="chip">${E("head.chips."+i)}${DEL("head.chips."+i)}</span>`).join("")+ADD("chip","칩");
   renderYT();
+  renderForum();
   document.getElementById("cards").innerHTML = M.cards.map((c,i)=>cardShell(c,i)).join("");
   wire();
+}
+/* ---- 열린 논의 · 회의 공간 (편집 모드 없이 누구나 주제 발의 + 댓글) ---- */
+function viewForum(){
+  const ds = Array.isArray(M.discussions) ? M.discussions : (M.discussions=[]);
+  const openN = ds.filter(d=>d.status!=="done").length;
+  const topics = ds.length
+    ? ds.map((d,i)=>topicHTML(d,i)).join("")
+    : `<div class="forum-empty mono">아직 열린 논의가 없습니다. 아래 버튼으로 회의 주제를 올려보세요.</div>`;
+  return `<div class="forum-bar">
+      <span class="forum-title mono">🗣 열린 논의 · 회의</span>
+      <span class="forum-count mono">${ds.length?`주제 <b>${ds.length}</b> · 진행 중 <b>${openN}</b>`:"주제 0"}</span>
+    </div>
+    <div class="forum-desc mono">기획 확정 전에 함께 이야기할 안건을 올리고, 발의자가 내용을 쓰면 나머지가 댓글로 논의합니다.</div>
+    <div class="forum-list">${topics}</div>
+    <button class="forum-add" id="forumAdd">+ 새 회의 주제 발의</button>`;
+}
+function topicHTML(d,i){
+  const done = d.status==="done";
+  const cs = d.comments||[];
+  const comments = cs.length
+    ? cs.map(cm=>`<div class="cmt">
+        <div class="cmt-meta mono"><b>${esc(cm.who||"익명")}</b><span>${fmtTime(cm.ts)}</span>
+          <button class="cmt-del" data-tcdel="${i}|${esc(cm.id)}" title="삭제">×</button></div>
+        <div class="cmt-text">${esc(cm.text)}</div></div>`).join("")
+    : `<div class="cmt-empty mono">아직 의견이 없습니다. 이 안건에 대해 이야기해 주세요.</div>`;
+  return `<div class="topic ${done?"done":""}">
+      <div class="topic-head">
+        <span class="topic-tag mono">안건 ${String(i+1).padStart(2,"0")}</span>
+        <span class="topic-subject" data-p="discussions.${i}.subject" contenteditable="true">${d.subject||""}</span>
+        <button class="dstatus ${done?"done":"open"}" data-dstatus="${i}" title="상태 전환 — 진행 중 / 완료">${done?"✓ 완료":"● 진행 중"}</button>
+        <button class="topic-del" data-tdel="${i}" title="주제 삭제">×</button>
+      </div>
+      <div class="topic-by mono">발의 · <b>${esc(d.by||"익명")}</b> · ${fmtTime(d.ts)}</div>
+      <div class="topic-body" data-p="discussions.${i}.body" data-ph="발의 내용을 적어주세요 — 배경, 논점, 결정이 필요한 것" contenteditable="true">${d.body||""}</div>
+      <div class="topic-thread">
+        <div class="topic-cmts">${comments}</div>
+        <div class="thread-add">
+          <input class="thread-input" type="text" maxlength="500" placeholder="이 안건에 의견 남기기…" data-tcinput="${i}">
+          <button class="btn thread-send" data-tcadd="${i}">남기기</button>
+        </div>
+      </div>
+    </div>`;
+}
+function renderForum(){
+  const box=document.getElementById("forum");
+  if(!box) return;
+  const ds=Array.isArray(M.discussions)?M.discussions:[];
+  box.classList.toggle("has-topics", ds.length>0);
+  box.innerHTML=viewForum();
+  // 제목/내용 인라인 편집 (편집 모드와 무관하게 항상 가능)
+  box.querySelectorAll('[contenteditable="true"][data-p]').forEach(el=>{
+    el.oninput=()=>{ setAt(el.dataset.p, el.innerHTML); save(); };
+    el.onkeydown=e=>{ if(e.key==="Enter" && el.classList.contains("topic-subject")){ e.preventDefault(); el.blur(); } };
+  });
+  box.querySelectorAll("[data-dstatus]").forEach(b=>{
+    b.onclick=()=>{ const d=M.discussions[+b.dataset.dstatus]; d.status = d.status==="done"?"open":"done"; save(); renderForum(); };
+  });
+  box.querySelectorAll("[data-tdel]").forEach(b=>{
+    b.onclick=()=>{ if(confirm("이 회의 주제를 삭제할까요? 댓글도 함께 사라집니다.")){ M.discussions.splice(+b.dataset.tdel,1); save(); renderForum(); } };
+  });
+  box.querySelectorAll("[data-tcadd]").forEach(b=>{ b.onclick=()=>addTopicComment(+b.dataset.tcadd); });
+  box.querySelectorAll("[data-tcinput]").forEach(inp=>{
+    inp.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); addTopicComment(+inp.dataset.tcinput); } };
+  });
+  box.querySelectorAll("[data-tcdel]").forEach(b=>{
+    b.onclick=()=>{ const [i,id]=b.dataset.tcdel.split("|"); const d=M.discussions[+i];
+      d.comments=(d.comments||[]).filter(x=>x.id!==id); save(); renderForum(); };
+  });
+  const add=document.getElementById("forumAdd");
+  if(add) add.onclick=()=>{
+    (M.discussions=M.discussions||[]).push({ id:uid("t"), subject:"새 회의 주제", by:NAME, body:"", ts:Date.now(), status:"open", comments:[] });
+    save(); renderForum();
+  };
+}
+function addTopicComment(i){
+  const inp=document.querySelector('[data-tcinput="'+i+'"]');
+  if(!inp) return;
+  const text=inp.value.trim(); if(!text) return;
+  const d=M.discussions[i];
+  (d.comments=d.comments||[]).push({ id:uid("tc"), who:NAME, text, ts:Date.now() });
+  inp.value=""; save(); renderForum();
 }
 /* ---- YouTube 무드 레퍼런스 (편집 모드에서 링크 변경) ---- */
 function ytId(u){
