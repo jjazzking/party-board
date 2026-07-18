@@ -394,8 +394,9 @@
 
   .blk{margin-bottom:24px}
   .blk:last-child{margin-bottom:0}
-  .blk-video .yt-frame{max-width:520px}
-  .blk-video .yt-empty{max-width:520px}
+  /* 유튜브 블록: 강조 카드처럼 전체 너비 + 가로로 길고 세로로 짧은 배너형 */
+  .blk-video .yt-frame{max-width:none;padding-top:38%}
+  .blk-video .yt-empty{max-width:none;min-height:96px}
   .blk-yt-edit{display:flex;gap:8px;align-items:center;margin-top:8px;max-width:520px}
   .blk-yt-lab{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--patina);flex:none}
   .blk-yturl{flex:1}
