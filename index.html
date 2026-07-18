@@ -391,6 +391,12 @@
 
   .blk{margin-bottom:24px}
   .blk:last-child{margin-bottom:0}
+  .blk-video .yt-frame{max-width:520px}
+  .blk-video .yt-empty{max-width:520px}
+  .blk-yt-edit{display:flex;gap:8px;align-items:center;margin-top:8px;max-width:520px}
+  .blk-yt-lab{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--patina);flex:none}
+  .blk-yturl{flex:1}
+  .blk-yt-del .del{position:static}
   .blk-h{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted-2);padding-bottom:8px;margin-bottom:12px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center}
   .blk-h .ed{flex:1}
   .blk p{font-size:14.5px;color:var(--body-text);margin-bottom:10px}
@@ -1213,12 +1219,22 @@ function viewDetail(ci){
       <div class="blk-h mono editonly" style="border:0;margin-bottom:14px">탭 이름 · ${E(tp+".t")}${DEL(tp)}</div>
       ${tab.blocks.map((bl,i)=>blockHTML(bl,tp+".blocks."+i)).join("")}
       <div class="addrow editonly" style="margin-top:18px">
-        ${ADD("blk|"+tp+"|p","문단")}${ADD("blk|"+tp+"|ul","리스트")}${ADD("blk|"+tp+"|run","시간표")}${ADD("blk|"+tp+"|kit","칩")}${ADD("blk|"+tp+"|rule","강조")}
+        ${ADD("blk|"+tp+"|p","문단")}${ADD("blk|"+tp+"|ul","리스트")}${ADD("blk|"+tp+"|run","시간표")}${ADD("blk|"+tp+"|kit","칩")}${ADD("blk|"+tp+"|rule","강조")}${ADD("blk|"+tp+"|yt","유튜브")}
       </div></div></div>`;
 }
 /* ---- blocks (shared by timeline tabs & custom cards) ---- */
 function blockHTML(b,bp){
   if(b.ty==="rule") return `<div class="rule ${b.red?"red":""}">${E(bp+".text")}${DEL(bp)}</div>`;
+  if(b.ty==="yt"){
+    const vid=ytId(b.url);
+    const frame=vid
+      ? `<div class="yt-frame"><iframe src="https://www.youtube-nocookie.com/embed/${vid}" title="유튜브 영상" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`
+      : `<div class="yt-empty mono">▶ 유튜브 영상 · ${EDIT?"아래 칸에 링크를 붙여넣으세요":"링크가 아직 없습니다"}</div>`;
+    const editor=EDIT
+      ? `<div class="blk-yt-edit"><span class="blk-yt-lab mono">YT</span><input class="yt-input blk-yturl" type="text" data-blkyt="${bp}" placeholder="유튜브 링크 또는 영상 ID" value="${esc(b.url||"")}"><span class="blk-yt-del">${DEL(bp)}</span></div>`
+      : "";
+    return `<div class="blk blk-video">${frame}${editor}</div>`;
+  }
   const h=`<div class="blk-h mono">${E(bp+".h")}${DEL(bp)}</div>`;
   let body="";
   if(b.ty==="p")   body=b.items.map((x,i)=>`<p>${E(bp+".items."+i)}${DEL(bp+".items."+i)}</p>`).join("");
@@ -1232,7 +1248,7 @@ function viewCustom(ci){
   const b=`cards.${ci}`, c=M.cards[ci];
   return `${(c.blocks||[]).map((bl,i)=>blockHTML(bl,b+".blocks."+i)).join("")}
     <div class="addrow editonly" style="margin-top:18px">
-      ${ADD("blk|"+b+"|p","문단")}${ADD("blk|"+b+"|ul","리스트")}${ADD("blk|"+b+"|run","시간표")}${ADD("blk|"+b+"|kit","칩")}${ADD("blk|"+b+"|rule","강조")}
+      ${ADD("blk|"+b+"|p","문단")}${ADD("blk|"+b+"|ul","리스트")}${ADD("blk|"+b+"|run","시간표")}${ADD("blk|"+b+"|kit","칩")}${ADD("blk|"+b+"|rule","강조")}${ADD("blk|"+b+"|yt","유튜브")}
     </div>`;
 }
 /* ---- venue ---- */
@@ -1364,6 +1380,13 @@ function wire(){
   document.querySelectorAll("[data-add]").forEach(b=>{
     b.onclick=e=>{ e.stopPropagation(); doAdd(b.dataset.add); save(); render(); };
   });
+  // 유튜브 블록 링크 입력: 저장은 즉시, 임베드 갱신은 확정(blur/Enter) 시
+  document.querySelectorAll("[data-blkyt]").forEach(inp=>{
+    inp.onclick=e=>e.stopPropagation();
+    inp.oninput=()=>{ setAt(inp.dataset.blkyt+".url", inp.value.trim()); save(); };
+    inp.onchange=()=>render();
+    inp.onkeydown=e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); inp.blur(); render(); } };
+  });
 }
 function doAdd(a){
   const [kind,arg,arg2]=a.split("|");
@@ -1386,6 +1409,7 @@ function doAdd(a){
     const parent=getAt(arg);
     const b = arg2==="rule" ? {ty:"rule",red:false,text:"<b>강조 —</b> 내용을 입력하세요."}
       : arg2==="run" ? {ty:"run",h:"제목",items:[["00:00","내용"]]}
+      : arg2==="yt" ? {ty:"yt",url:""}
       : {ty:arg2,h:"제목",items:["내용"]};
     (parent.blocks=parent.blocks||[]).push(b);
   }
