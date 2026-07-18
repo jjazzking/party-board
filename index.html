@@ -200,6 +200,9 @@
   .topic-del:hover{color:var(--blood)}
   .topic-by{font-size:10px;letter-spacing:.06em;color:var(--muted-2);margin:7px 0 10px}
   .topic-by b{color:var(--patina);font-weight:600}
+  .topic-by-name{color:var(--patina);font-weight:600;outline:none;border-radius:2px;padding:0 4px;margin:0 -2px;cursor:text}
+  .topic-by-name:hover{background:var(--fill-soft)}
+  .topic-by-name:focus{background:rgba(111,168,156,.10);box-shadow:inset 0 0 0 1px var(--patina-dim)}
   .topic-body{font-size:14px;color:var(--body-text);line-height:1.65;white-space:pre-wrap;word-break:break-word;
     outline:none;border-radius:2px;padding:6px 8px;margin:0 -8px;min-height:1.6em;background:var(--fill-soft)}
   .topic-body:hover{background:var(--fill)}
@@ -884,7 +887,7 @@ function topicHTML(d,i){
         <button class="topic-del" data-tdel="${i}" title="주제 삭제">×</button>
       </div>
       <div class="topic-fold">
-        <div class="topic-by mono">발의 · <b>${esc(d.by||"익명")}</b> · ${fmtTime(d.ts)}</div>
+        <div class="topic-by mono">발의 · <span class="topic-by-name" data-p="discussions.${i}.by" contenteditable="true" title="발의자 이름 편집">${esc(d.by||"익명")}</span> · ${fmtTime(d.ts)}</div>
         <div class="topic-body" data-p="discussions.${i}.body" data-ph="발의 내용을 적어주세요 — 배경, 논점, 결정이 필요한 것" contenteditable="true">${d.body||""}</div>
         <div class="topic-thread">
           <div class="topic-cmts">${comments}</div>
@@ -919,7 +922,7 @@ function renderForum(){
   // 제목/내용 인라인 편집 (편집 모드와 무관하게 항상 가능)
   box.querySelectorAll('[contenteditable="true"][data-p]').forEach(el=>{
     el.oninput=()=>{ setAt(el.dataset.p, el.innerHTML); save(); };
-    el.onkeydown=e=>{ if(e.key==="Enter" && el.classList.contains("topic-subject")){ e.preventDefault(); el.blur(); } };
+    el.onkeydown=e=>{ if(e.key==="Enter" && (el.classList.contains("topic-subject")||el.classList.contains("topic-by-name"))){ e.preventDefault(); el.blur(); } };
   });
   box.querySelectorAll("[data-dstatus]").forEach(b=>{
     b.onclick=()=>{ const d=M.discussions[+b.dataset.dstatus]; d.status = d.status==="done"?"open":"done"; save(); renderForum(); };
