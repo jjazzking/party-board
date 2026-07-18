@@ -160,8 +160,13 @@
       var(--panel);
     padding:20px 20px 22px;position:relative;overflow:hidden}
   .forum::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--patina)}
-  .forum-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .forum-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;cursor:pointer;user-select:none}
+  .forum-bar:focus-visible{outline:2px solid var(--patina);outline-offset:3px}
   .forum-title{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--patina);font-weight:600}
+  .forum-toggle{flex:none;width:22px;height:22px;display:grid;place-items:center;border:1px solid var(--patina-dim);
+    border-radius:50%;color:var(--patina);font-size:14px;line-height:1}
+  .forum:not([data-open="true"]) .forum-body{display:none}
+  .forum:not([data-open="true"]) .forum-desc{display:none}
   .forum-count{font-size:10px;letter-spacing:.1em;color:var(--muted-2);margin-left:auto}
   .forum-count b{color:var(--patina)}
   .forum-desc{font-size:11px;letter-spacing:.02em;color:var(--muted);margin:8px 0 16px;line-height:1.6}
@@ -177,6 +182,11 @@
     background:var(--panel-2);padding:15px 16px;transition:.2s}
   .topic.done{border-left-color:var(--muted-2);opacity:.72}
   .topic-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .topic-toggle{flex:none;width:20px;height:20px;border:1px solid var(--line);background:none;color:var(--muted);
+    border-radius:3px;cursor:pointer;font-size:11px;line-height:1;display:grid;place-items:center;transition:transform .2s,color .2s,border-color .2s}
+  .topic[data-open="true"] .topic-toggle{transform:rotate(90deg);color:var(--patina);border-color:var(--patina-dim)}
+  .topic:not([data-open="true"]) .topic-fold{display:none}
+  .topic-cn{flex:none;font-size:10px;color:var(--muted-2);white-space:nowrap}
   .topic-tag{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-2);flex:none}
   .topic-subject{font-family:"Black Han Sans",sans-serif;font-weight:400;font-size:17px;color:var(--bone);
     flex:1;min-width:120px;outline:none;border-radius:2px}
@@ -721,6 +731,9 @@ let NAME = "익명";
 const OPEN = new Set();
 /* 재생 중인 레퍼런스도 "보는 사람"만의 로컬 상태 — 저장/동기화하지 않는다 */
 let refActive = 0;
+/* 논의 공간 접힘 상태도 로컬 전용 — 전체 존(forumOpen) + 개별 안건(topicClosed by id) */
+let forumOpen = true;
+const topicClosed = new Set();
 let OPEN_SEEDED = false;
 function seedOpen(){
   if(OPEN_SEEDED) return;
@@ -834,13 +847,16 @@ function viewForum(){
   const topics = ds.length
     ? ds.map((d,i)=>topicHTML(d,i)).join("")
     : `<div class="forum-empty mono">아직 열린 논의가 없습니다. 아래 버튼으로 회의 주제를 올려보세요.</div>`;
-  return `<div class="forum-bar">
+  return `<div class="forum-bar" id="forumBar" role="button" tabindex="0" aria-expanded="${forumOpen}" title="논의 공간 접기/펼치기">
       <span class="forum-title mono">🗣 열린 논의 · 회의</span>
       <span class="forum-count mono">${ds.length?`주제 <b>${ds.length}</b> · 진행 중 <b>${openN}</b>`:"주제 0"}</span>
+      <span class="forum-toggle">${forumOpen?"–":"+"}</span>
     </div>
-    <div class="forum-desc mono">기획 확정 전에 함께 이야기할 안건을 올리고, 발의자가 내용을 쓰면 나머지가 댓글로 논의합니다.</div>
-    <div class="forum-list">${topics}</div>
-    <button class="forum-add" id="forumAdd">+ 새 회의 주제 발의</button>`;
+    <div class="forum-body">
+      <div class="forum-desc mono">기획 확정 전에 함께 이야기할 안건을 올리고, 발의자가 내용을 쓰면 나머지가 댓글로 논의합니다.</div>
+      <div class="forum-list">${topics}</div>
+      <button class="forum-add" id="forumAdd">+ 새 회의 주제 발의</button>
+    </div>`;
 }
 function topicHTML(d,i){
   const done = d.status==="done";
@@ -851,20 +867,25 @@ function topicHTML(d,i){
           <button class="cmt-del" data-tcdel="${i}|${esc(cm.id)}" title="삭제">×</button></div>
         <div class="cmt-text">${esc(cm.text)}</div></div>`).join("")
     : `<div class="cmt-empty mono">아직 의견이 없습니다. 이 안건에 대해 이야기해 주세요.</div>`;
-  return `<div class="topic ${done?"done":""}">
+  const isOpen = !topicClosed.has(d.id);
+  return `<div class="topic ${done?"done":""}" data-open="${isOpen}" data-tid="${d.id}">
       <div class="topic-head">
+        <button class="topic-toggle" data-ttoggle="${esc(d.id)}" title="안건 접기/펼치기">▸</button>
         <span class="topic-tag mono">안건 ${String(i+1).padStart(2,"0")}</span>
         <span class="topic-subject" data-p="discussions.${i}.subject" contenteditable="true">${d.subject||""}</span>
+        ${cs.length?`<span class="topic-cn mono" title="의견 ${cs.length}개">💬 ${cs.length}</span>`:""}
         <button class="dstatus ${done?"done":"open"}" data-dstatus="${i}" title="상태 전환 — 진행 중 / 완료">${done?"✓ 완료":"● 진행 중"}</button>
         <button class="topic-del" data-tdel="${i}" title="주제 삭제">×</button>
       </div>
-      <div class="topic-by mono">발의 · <b>${esc(d.by||"익명")}</b> · ${fmtTime(d.ts)}</div>
-      <div class="topic-body" data-p="discussions.${i}.body" data-ph="발의 내용을 적어주세요 — 배경, 논점, 결정이 필요한 것" contenteditable="true">${d.body||""}</div>
-      <div class="topic-thread">
-        <div class="topic-cmts">${comments}</div>
-        <div class="thread-add">
-          <input class="thread-input" type="text" maxlength="500" placeholder="이 안건에 의견 남기기…" data-tcinput="${i}">
-          <button class="btn thread-send" data-tcadd="${i}">남기기</button>
+      <div class="topic-fold">
+        <div class="topic-by mono">발의 · <b>${esc(d.by||"익명")}</b> · ${fmtTime(d.ts)}</div>
+        <div class="topic-body" data-p="discussions.${i}.body" data-ph="발의 내용을 적어주세요 — 배경, 논점, 결정이 필요한 것" contenteditable="true">${d.body||""}</div>
+        <div class="topic-thread">
+          <div class="topic-cmts">${comments}</div>
+          <div class="thread-add">
+            <input class="thread-input" type="text" maxlength="500" placeholder="이 안건에 의견 남기기…" data-tcinput="${i}">
+            <button class="btn thread-send" data-tcadd="${i}">남기기</button>
+          </div>
         </div>
       </div>
     </div>`;
@@ -875,6 +896,20 @@ function renderForum(){
   const ds=Array.isArray(M.discussions)?M.discussions:[];
   box.classList.toggle("has-topics", ds.length>0);
   box.innerHTML=viewForum();
+  box.setAttribute("data-open", forumOpen);
+  // 접기/펼치기는 보는 사람 로컬 상태 — 저장/동기화 없이 즉시 토글
+  const bar=document.getElementById("forumBar");
+  if(bar){
+    const toggle=()=>{ forumOpen=!forumOpen; box.setAttribute("data-open",forumOpen);
+      bar.setAttribute("aria-expanded",forumOpen); bar.querySelector(".forum-toggle").textContent=forumOpen?"–":"+"; };
+    bar.onclick=toggle;
+    bar.onkeydown=e=>{ if(e.target!==bar)return; if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle(); } };
+  }
+  box.querySelectorAll("[data-ttoggle]").forEach(btn=>{
+    btn.onclick=e=>{ e.stopPropagation(); const id=btn.dataset.ttoggle;
+      if(topicClosed.has(id)) topicClosed.delete(id); else topicClosed.add(id);
+      btn.closest(".topic").setAttribute("data-open", !topicClosed.has(id)); };
+  });
   // 제목/내용 인라인 편집 (편집 모드와 무관하게 항상 가능)
   box.querySelectorAll('[contenteditable="true"][data-p]').forEach(el=>{
     el.oninput=()=>{ setAt(el.dataset.p, el.innerHTML); save(); };
