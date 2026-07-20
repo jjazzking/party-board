@@ -276,6 +276,8 @@
   table.grid tr:nth-child(even) td{background:var(--fill-soft)}
   table.grid .grid-ctrl,table.grid .grid-colctrl td{border-color:transparent;background:none;min-width:0;padding:4px;text-align:center}
   .colctrl-btns{display:inline-flex;gap:2px;align-items:center;justify-content:center}
+  .rowctrl-btns{display:inline-flex;gap:2px;align-items:center;justify-content:center}
+  .rowctrl-btns .del{position:static}
   .colctrl-btns .del{position:static}
   table.grid .del{position:static}
   .tcell{display:block;min-height:1.3em;padding:9px 12px;outline:none;cursor:text}
@@ -1119,7 +1121,10 @@ function viewTable(ci){
       // 표 셀은 편집 모드와 무관하게 항상 입력 가능 (협업용 데이터)
       out+=`<${tag}><span class="ed tcell" data-p="${p}" contenteditable="true">${getAt(p)}</span></${tag}>`;
     }
-    if(EDIT) out+=`<td class="grid-ctrl"><button class="del" data-del="${b}.rows.${r}" title="행 삭제">×</button></td>`;
+    if(EDIT) out+=`<td class="grid-ctrl"><span class="rowctrl-btns">`
+      +`<button class="mv" data-mv="${b}.rows.${r}|-1" title="행 위로">▲</button>`
+      +`<button class="mv" data-mv="${b}.rows.${r}|1" title="행 아래로">▼</button>`
+      +`<button class="del" data-del="${b}.rows.${r}" title="행 삭제">×</button></span></td>`;
     out+="</tr>";
   });
   if(EDIT){
