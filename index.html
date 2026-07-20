@@ -1300,7 +1300,16 @@ function viewVenue(ci){
 function wire(){
   document.querySelectorAll('.ed[contenteditable="true"]').forEach(el=>{
     el.oninput=()=>{ setAt(el.dataset.p, el.innerHTML); save(); };
-    el.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); el.blur(); } };
+    el.onkeydown=e=>{
+      if(e.key!=="Enter") return;
+      if(e.altKey && el.classList.contains("tcell")){   // 표 셀: Alt+Enter로 줄바꿈
+        e.preventDefault();
+        document.execCommand("insertLineBreak");
+        setAt(el.dataset.p, el.innerHTML); save();
+        return;
+      }
+      e.preventDefault(); el.blur();
+    };
     el.onclick=e=>e.stopPropagation();
   });
   document.querySelectorAll("[data-note]").forEach(el=>{
