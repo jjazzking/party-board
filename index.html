@@ -275,6 +275,8 @@
   table.grid td{color:var(--body-text)}
   table.grid tr:nth-child(even) td{background:var(--fill-soft)}
   table.grid .grid-ctrl,table.grid .grid-colctrl td{border-color:transparent;background:none;min-width:0;padding:4px;text-align:center}
+  .colctrl-btns{display:inline-flex;gap:2px;align-items:center;justify-content:center}
+  .colctrl-btns .del{position:static}
   table.grid .del{position:static}
   .tcell{display:block;min-height:1.3em;padding:9px 12px;outline:none;cursor:text}
   .tcell:hover{background:var(--fill-soft)}
@@ -1122,7 +1124,10 @@ function viewTable(ci){
   });
   if(EDIT){
     out+='<tr class="grid-colctrl">';
-    for(let cc=0; cc<ncol; cc++) out+=`<td><button class="del" data-delcol="${ci}|${cc}" title="열 삭제">×</button></td>`;
+    for(let cc=0; cc<ncol; cc++) out+=`<td><span class="colctrl-btns">`
+      +`<button class="mv" data-movecol="${ci}|${cc}|-1" title="열 왼쪽으로">◀</button>`
+      +`<button class="mv" data-movecol="${ci}|${cc}|1" title="열 오른쪽으로">▶</button>`
+      +`<button class="del" data-delcol="${ci}|${cc}" title="열 삭제">×</button></span></td>`;
     out+="<td></td></tr>";
   }
   out+="</table></div>";
@@ -1314,6 +1319,13 @@ function wire(){
   document.querySelectorAll("[data-delcol]").forEach(b=>{
     b.onclick=e=>{ e.stopPropagation(); const [ci,cc]=b.dataset.delcol.split("|").map(Number);
       (M.cards[ci].rows||[]).forEach(r=>r.splice(cc,1)); save(); render(); };
+  });
+  document.querySelectorAll("[data-movecol]").forEach(b=>{
+    b.onclick=e=>{ e.stopPropagation(); const [ci,cc,dir]=b.dataset.movecol.split("|").map(Number);
+      const rows=M.cards[ci].rows||[], ncol=rows.reduce((m,r)=>Math.max(m,r.length),0), j=cc+dir;
+      if(j<0||j>=ncol) return;
+      rows.forEach(r=>{ while(r.length<=Math.max(cc,j)) r.push(""); [r[cc],r[j]]=[r[j],r[cc]]; });   // 모든 행에서 두 열을 교환
+      save(); render(); };
   });
   document.querySelectorAll("[data-cadd]").forEach(btn=>{
     btn.onclick=e=>{ e.stopPropagation(); addComment(+btn.dataset.cadd); };
