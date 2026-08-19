@@ -510,6 +510,20 @@
 
   footer{margin-top:56px;padding-top:22px;border-top:1px solid var(--line-soft);font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-2);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  /* ===== ≡ 그립 — 줄을 끌어서 위치 조정 (편집 모드 · 마우스/터치) ===== */
+  .grip{display:none}
+  body.edit .grip{display:block;position:absolute;left:4px;top:12px;width:12px;height:10px;padding:0;border:0;
+    color:var(--muted-2);cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;
+    background:linear-gradient(currentColor,currentColor) 0 0/12px 1.5px no-repeat,
+      linear-gradient(currentColor,currentColor) 0 4px/12px 1.5px no-repeat,
+      linear-gradient(currentColor,currentColor) 0 8px/12px 1.5px no-repeat}
+  body.edit .grip:hover{color:var(--amber)}
+  body.edit .grip-i{position:static;display:inline-block;vertical-align:middle;align-self:center;flex:none;margin:0 7px 0 0}
+  body.edit .drow{position:relative;padding-left:22px}
+  body.edit .drow.k{padding-left:9px}
+  .drag-on{opacity:.45}
+  body.dragging{-webkit-user-select:none;user-select:none}
+  body.dragging .grip{cursor:grabbing}
 </style>
 </head>
 <body>
@@ -840,6 +854,21 @@ const DEL=p=>`<button class="del" data-del="${p}" title="삭제">×</button>`;
 const ADD=(a,l)=>`<button class="add" data-add="${a}">+ ${l}</button>`;
 /* 배열 항목(블록 등) 위/아래 이동 — 편집 모드에서만 표시 */
 const MV=p=>`<span class="blk-move"><button class="mv" data-mv="${p}|-1" title="위로">▲</button><button class="mv" data-mv="${p}|1" title="아래로">▼</button></span>`;
+/* ≡ 그립 — 줄을 끌어서 순서 변경. 줄에는 data-drag="배열경로.인덱스"를 함께 붙인다 */
+const GRIP=(c="")=>`<span class="grip ${c}" data-grip title="≡ 끌어서 순서를 바꿉니다"></span>`;
+/* 배열 안에서 항목을 from → to 로 옮긴다 */
+function moveItemAt(arrPath,from,to){
+  const arr=getAt(arrPath);
+  if(!Array.isArray(arr)||from===to||from<0||to<0||from>=arr.length||to>=arr.length) return false;
+  arr.splice(to,0,arr.splice(from,1)[0]);
+  const m=arrPath.match(/^cards\.(\d+)\.items$/);
+  if(m){   // 타임라인 구간을 옮기면 선택 중인 구간·탭도 따라가게
+    const c=M.cards[+m[1]], nx=i=> i===from?to : (from<i&&i<=to)?i-1 : (to<=i&&i<from)?i+1 : i;
+    if(typeof c.active==="number") c.active=nx(c.active);
+    if(c.activeTab){ const t={}; Object.keys(c.activeTab).forEach(k=>t[nx(+k)]=c.activeTab[k]); c.activeTab=t; }
+  }
+  return true;
+}
 
 /* ================= sync ================= */
 function setStatus(cls,txt){
@@ -1258,13 +1287,14 @@ function viewTable(ci){
   const ncol=rows.reduce((m,r)=>Math.max(m,r.length),0)||1;
   let out='<div class="table-wrap"><table class="grid">';
   rows.forEach((row,r)=>{
-    out+="<tr>";
+    out+=`<tr data-drag="${b}.rows.${r}">`;
     for(let cc=0; cc<ncol; cc++){
       const tag=r===0?"th":"td", p=b+".rows."+r+"."+cc;
       // 표 셀은 편집 모드와 무관하게 항상 입력 가능 (협업용 데이터)
       out+=`<${tag}><span class="ed tcell" data-p="${p}" contenteditable="true">${getAt(p)}</span></${tag}>`;
     }
     if(EDIT) out+=`<td class="grid-ctrl"><span class="rowctrl-btns">`
+      +GRIP("grip-i")
       +`<button class="mv" data-mv="${b}.rows.${r}|-1" title="행 위로">▲</button>`
       +`<button class="mv" data-mv="${b}.rows.${r}|1" title="행 아래로">▼</button>`
       +`<button class="del" data-del="${b}.rows.${r}" title="행 삭제">×</button></span></td>`;
@@ -1330,11 +1360,11 @@ function threadHTML(ci){
 /* ---- steps ---- */
 function viewSteps(ci){
   const c=M.cards[ci], b=`cards.${ci}`;
-  const steps=c.items.map((s,i)=>`<li class="step" data-state="${s.s}">
+  const steps=c.items.map((s,i)=>`<li class="step drow" data-drag="${b}.items.${i}" data-state="${s.s}">${GRIP()}
     <span class="step-i mono" data-cycle="${b}.items.${i}.s">${String(i+1).padStart(2,"0")}</span>
     <span class="step-t">${E(b+".items."+i+".t")}</span>
     <span class="step-d">${E(b+".items."+i+".d")}${DEL(b+".items."+i)}</span></li>`).join("");
-  const warns=(c.warns||[]).map((w,i)=>`<p>${E(b+".warns."+i)}${DEL(b+".warns."+i)}</p>`).join("");
+  const warns=(c.warns||[]).map((w,i)=>`<p data-drag="${b}.warns.${i}">${GRIP("grip-i")}${E(b+".warns."+i)}${DEL(b+".warns."+i)}</p>`).join("");
   return `<ul class="steps">${steps}</ul>${ADD("step|"+ci,"단계")}
     <div class="hintline editonly">번호를 클릭하면 상태가 바뀝니다 — 기본 → 완료 → 진행 중</div>
     <div class="warn"><div class="warn-h mono">${E(b+".warnH")}</div>${warns}${ADD("warn|"+ci,"주의")}</div>`;
@@ -1342,7 +1372,7 @@ function viewSteps(ci){
 /* ---- risk/asset ---- */
 function viewRA(ci){
   const c=M.cards[ci], b=`cards.${ci}`;
-  const items=c.items.map((r,i)=>`<div class="ra-item" data-k="${r.k}">
+  const items=c.items.map((r,i)=>`<div class="ra-item drow" data-drag="${b}.items.${i}" data-k="${r.k}">${GRIP()}
     <span class="ra-lab mono" data-kind="${b}.items.${i}.k">${E(b+".items."+i+".l")}</span>${DEL(b+".items."+i)}
     <div class="ra-t">${E(b+".items."+i+".t")}</div>
     <p class="ra-d">${E(b+".items."+i+".d")}</p>
@@ -1357,7 +1387,7 @@ function meter(t,l,n,b,pi){
 }
 function viewTimeline(ci){
   const c=M.cards[ci], b=`cards.${ci}`;
-  const strips=c.items.map((p,i)=>`<div class="strip ${i===c.active?"sel":""}" data-strip="${ci}|${i}" tabindex="0">
+  const strips=c.items.map((p,i)=>`<div class="strip drow ${i===c.active?"sel":""}" data-strip="${ci}|${i}" data-drag="${b}.items.${i}" tabindex="0">${GRIP()}
     <span class="s-time mono">${E(b+".items."+i+".time")}</span>
     <span class="s-name">${E(b+".items."+i+".name")}<small>${E(b+".items."+i+".note")}</small></span>
     <span class="meters">${meter("snd","SND",p.snd,b,i)}${meter("soc","SOC",p.soc,b,i)}</span>
@@ -1394,24 +1424,25 @@ function viewDetail(ci){
 }
 /* ---- blocks (shared by timeline tabs & custom cards) ---- */
 function blockHTML(b,bp){
-  if(b.ty==="rule") return `<div class="rule ${b.red?"red":""}">${E(bp+".text")}${MV(bp)}${DEL(bp)}</div>`;
+  if(b.ty==="rule") return `<div class="rule ${b.red?"red":""}" data-drag="${bp}">${GRIP("grip-i")}${E(bp+".text")}${MV(bp)}${DEL(bp)}</div>`;
   if(b.ty==="yt"){
     const vid=ytId(b.url);
     const frame=vid
       ? `<div class="yt-frame"><iframe src="https://www.youtube-nocookie.com/embed/${vid}" title="유튜브 영상" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>`
       : `<div class="yt-empty mono">▶ 유튜브 영상 · ${EDIT?"아래 칸에 링크를 붙여넣으세요":"링크가 아직 없습니다"}</div>`;
     const editor=EDIT
-      ? `<div class="blk-yt-edit"><span class="blk-yt-lab mono">YT</span><input class="yt-input blk-yturl" type="text" data-blkyt="${bp}" placeholder="유튜브 링크 또는 영상 ID" value="${esc(b.url||"")}"><span class="blk-yt-del">${MV(bp)}${DEL(bp)}</span></div>`
+      ? `<div class="blk-yt-edit"><span class="blk-yt-lab mono">YT</span><input class="yt-input blk-yturl" type="text" data-blkyt="${bp}" placeholder="유튜브 링크 또는 영상 ID" value="${esc(b.url||"")}"><span class="blk-yt-del">${GRIP("grip-i")}${MV(bp)}${DEL(bp)}</span></div>`
       : "";
-    return `<div class="blk blk-video">${frame}${editor}</div>`;
+    return `<div class="blk blk-video" data-drag="${bp}">${frame}${editor}</div>`;
   }
-  const h=`<div class="blk-h mono">${E(bp+".h")}${MV(bp)}${DEL(bp)}</div>`;
+  const h=`<div class="blk-h mono">${GRIP("grip-i")}${E(bp+".h")}${MV(bp)}${DEL(bp)}</div>`;
   let body="";
-  if(b.ty==="p")   body=b.items.map((x,i)=>`<p>${E(bp+".items."+i)}${DEL(bp+".items."+i)}</p>`).join("");
-  if(b.ty==="ul")  body=`<ul>${b.items.map((x,i)=>`<li>${E(bp+".items."+i)}${DEL(bp+".items."+i)}</li>`).join("")}</ul>`;
-  if(b.ty==="run") body=b.items.map((x,i)=>`<div class="run-r"><span class="run-t mono">${E(bp+".items."+i+".0")}</span><span class="run-d">${E(bp+".items."+i+".1")}${DEL(bp+".items."+i)}</span></div>`).join("");
-  if(b.ty==="kit") body=`<div class="kit">${b.items.map((x,i)=>`<span class="k">${E(bp+".items."+i)}${DEL(bp+".items."+i)}</span>`).join("")}</div>`;
-  return `<div class="blk">${h}${body}${ADD("item|"+bp,"줄")}</div>`;
+  const ip=i=>bp+".items."+i;
+  if(b.ty==="p")   body=b.items.map((x,i)=>`<p data-drag="${ip(i)}">${GRIP("grip-i")}${E(ip(i))}${DEL(ip(i))}</p>`).join("");
+  if(b.ty==="ul")  body=`<ul>${b.items.map((x,i)=>`<li data-drag="${ip(i)}">${GRIP("grip-i")}${E(ip(i))}${DEL(ip(i))}</li>`).join("")}</ul>`;
+  if(b.ty==="run") body=b.items.map((x,i)=>`<div class="run-r drow" data-drag="${ip(i)}">${GRIP()}<span class="run-t mono">${E(ip(i)+".0")}</span><span class="run-d">${E(ip(i)+".1")}${DEL(ip(i))}</span></div>`).join("");
+  if(b.ty==="kit") body=`<div class="kit">${b.items.map((x,i)=>`<span class="k drow" data-drag="${ip(i)}">${GRIP("grip-i")}${E(ip(i))}${DEL(ip(i))}</span>`).join("")}</div>`;
+  return `<div class="blk" data-drag="${bp}">${h}${body}${ADD("item|"+bp,"줄")}</div>`;
 }
 /* ---- custom card ---- */
 function viewCustom(ci){
@@ -1433,7 +1464,7 @@ function viewVenue(ci){
     const qs=s.q.map((q,qi)=>{
       const hide=(c.filter.star&&!q.x)||(c.filter.todo&&q.d);
       const qp=`${b}.items.${si}.q.${qi}`;
-      return `<div class="q ${q.d?"done":""} ${hide?"hide":""}">
+      return `<div class="q drow ${q.d?"done":""} ${hide?"hide":""}" data-drag="${qp}">${GRIP()}
         <span class="q-box ${q.d?"on":""}" data-check="${qp}.d">✓</span>
         <span class="q-star ${q.x?"on":""}" data-star="${qp}.x">${q.x?"★":"☆"}</span>
         <span class="q-main">
@@ -1441,7 +1472,7 @@ function viewVenue(ci){
           <div class="q-note mono" contenteditable="true" data-note="${qp}.n">${q.n||""}</div>
         </span></div>`;
     }).join("");
-    return `<div class="qsec"><div class="qsec-h mono">${E(b+".items."+si+".s")}${DEL(b+".items."+si)}</div>${qs}${ADD("q|"+ci+"|"+si,"질문")}</div>`;
+    return `<div class="qsec" data-drag="${b}.items.${si}"><div class="qsec-h mono">${GRIP("grip-i")}${E(b+".items."+si+".s")}${DEL(b+".items."+si)}</div>${qs}${ADD("q|"+ci+"|"+si,"질문")}</div>`;
   }).join("");
   return `<div class="q-tools">
       <button class="btn ${c.filter.star?"on":""}" data-filter="${b}.filter.star">★ 필수만</button>
@@ -1533,7 +1564,7 @@ function wire(){
   document.querySelectorAll(".strip").forEach(s=>{
     const go=()=>{ const [ci,pi]=s.dataset.strip.split("|").map(Number);
       M.cards[ci].active=pi; save(); render(); };
-    s.onclick=e=>{ if(e.target.closest(".ed")||e.target.closest("[data-lv]")||e.target.closest(".del"))return; go(); };
+    s.onclick=e=>{ if(e.target.closest(".ed")||e.target.closest("[data-lv]")||e.target.closest(".del")||e.target.closest(".grip"))return; go(); };
     // 스트립 컨테이너 자체가 포커스일 때만 Enter/Space로 이동 — 자식 편집칸에 입력한 스페이스를 삼키지 않도록
     s.onkeydown=e=>{ if(e.target!==s) return; if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } };
   });
@@ -1579,6 +1610,53 @@ function wire(){
     inp.oninput=()=>{ setAt(inp.dataset.blkyt+".url", inp.value.trim()); save(); };
     inp.onchange=()=>render();
     inp.onkeydown=e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); inp.blur(); render(); } };
+  });
+  wireDrag();
+}
+/* ---- ≡ 그립 드래그: 같은 목록 안에서 줄 위치 바꾸기 (마우스·터치 공통) ---- */
+function wireDrag(){
+  const arrOf=el=>el.dataset.drag.slice(0,el.dataset.drag.lastIndexOf("."));
+  const idxOf=el=>+el.dataset.drag.slice(el.dataset.drag.lastIndexOf(".")+1);
+  document.querySelectorAll("[data-grip]").forEach(g=>{
+    g.onclick=e=>e.stopPropagation();
+    g.onpointerdown=e=>{
+      if(e.button>0) return;
+      const row=g.closest("[data-drag]"); if(!row) return;
+      const parent=row.parentElement, arrPath=arrOf(row), from=idxOf(row);
+      // 같은 배열에 속한 형제 줄만 대상 (필터로 숨은 줄도 자리는 지킨다)
+      const sibs=()=>[...parent.children].filter(el=>el.dataset&&el.dataset.drag&&arrOf(el)===arrPath);
+      const all=sibs(); if(all.length<2) return;
+      e.preventDefault(); e.stopPropagation();
+      // 칩처럼 한 줄에 여러 개가 놓이는 배치면 가로 위치까지 함께 본다
+      const tops=all.map(el=>el.getBoundingClientRect().top);
+      const wrapped=tops.some((t,i)=>i&&Math.abs(t-tops[i-1])<2);
+      row.classList.add("drag-on"); document.body.classList.add("dragging");
+      // 줄을 DOM에서 옮기면 포인터 캡처가 풀리므로 document에서 듣는다
+      const move=ev=>{
+        const list=sibs(), me=list.indexOf(row);
+        for(let i=0;i<list.length;i++){
+          const t=list[i]; if(t===row) continue;
+          const r=t.getBoundingClientRect();
+          if(!r.width&&!r.height) continue;            // 숨은 줄은 건너뛴다
+          const before = wrapped
+            ? (ev.clientY<r.top || (ev.clientY<=r.bottom && ev.clientX<r.left+r.width/2))
+            : ev.clientY<r.top+r.height/2;
+          if(before && i<me){ parent.insertBefore(row,t); return; }
+          if(!before && i>me){ parent.insertBefore(row,t.nextSibling); return; }
+        }
+      };
+      const end=()=>{
+        document.removeEventListener("pointermove",move);
+        document.removeEventListener("pointerup",end);
+        document.removeEventListener("pointercancel",end);
+        row.classList.remove("drag-on"); document.body.classList.remove("dragging");
+        const to=sibs().indexOf(row);
+        if(to!==from && moveItemAt(arrPath,from,to)){ save(); render(); }
+      };
+      document.addEventListener("pointermove",move);
+      document.addEventListener("pointerup",end);
+      document.addEventListener("pointercancel",end);
+    };
   });
 }
 function doAdd(a){
