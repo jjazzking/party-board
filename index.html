@@ -139,7 +139,12 @@
   .u-date{font-family:"IBM Plex Mono",monospace;font-size:11px;background:var(--fill);border:1px solid var(--line);
     color:var(--muted);border-radius:var(--radius);padding:4px 6px}
   .u-date:focus{outline:none;border-color:var(--blood)}
-  .u-item.done .u-date,.u-item.done .u-badge{opacity:.5}
+  .u-who{width:84px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.03em;background:var(--fill);
+    border:1px solid var(--line);color:var(--bone);border-radius:20px;padding:4px 9px;text-align:center}
+  .u-who::placeholder{color:var(--muted-2)}
+  .u-who:placeholder-shown{color:var(--muted-2);border-style:dashed;background:none}
+  .u-who:focus{outline:none;border-style:solid;border-color:var(--blood);background:var(--fill)}
+  .u-item.done .u-date,.u-item.done .u-badge,.u-item.done .u-who{opacity:.5}
   .u-del{flex:none;border:0;background:none;color:var(--muted-2);cursor:pointer;font-size:15px;line-height:1;padding:0 2px}
   .u-del:hover{color:var(--blood)}
   .u-done-wrap{margin-top:4px;padding-top:9px;border-top:1px dashed var(--line-soft)}
@@ -150,6 +155,10 @@
   .u-add-text:focus{outline:none;border-color:var(--blood)}
   .u-add-date{font-family:"IBM Plex Mono",monospace;font-size:12px;background:var(--fill);border:1px solid var(--line);
     color:var(--muted);border-radius:var(--radius);padding:8px 10px}
+  .u-add-who{width:104px;font-family:"IBM Plex Mono",monospace;font-size:12px;background:var(--fill);
+    border:1px solid var(--line);color:var(--bone);border-radius:var(--radius);padding:8px 10px}
+  .u-add-who::placeholder{color:var(--muted-2)}
+  .u-add-who:focus{outline:none;border-color:var(--blood)}
   .u-add-btn{flex:none;cursor:pointer}
 
   /* YouTube 무드 레퍼런스 */
@@ -874,7 +883,7 @@ async function connect(){
 function applyRemote(data, who){
   // 누가 타이핑 중이면 커서가 튀지 않도록 blur 될 때까지 보류
   const el=document.activeElement;
-  if(el && (el.isContentEditable || el.classList.contains("thread-input") || el.classList.contains("yt-input") || el.classList.contains("u-add-text"))){ pendingRemote={data,who}; return; }
+  if(el && (el.isContentEditable || el.classList.contains("thread-input") || el.classList.contains("yt-input") || el.classList.contains("u-add-text") || el.classList.contains("u-who") || el.classList.contains("u-add-who"))){ pendingRemote={data,who}; return; }
   M=data; render();
   setStatus("live", (who||"누군가")+" 수정함");
   setTimeout(()=>{ if(LIVE) setStatus("live","실시간 연결됨"); },2200);
@@ -936,6 +945,7 @@ function viewUrgent(){
         <button class="u-check ${u.done?"on":""}" data-udone="${esc(u.id)}" title="${u.done?"되돌리기":"완료"}">✓</button>
         <span class="u-text" data-utext="${esc(u.id)}" contenteditable="true">${esc(u.text||"")}</span>
         <span class="u-meta">
+          <input class="u-who" type="text" data-uwho="${esc(u.id)}" value="${esc(u.who||"")}" placeholder="담당자" maxlength="12" title="담당자 — 더블클릭하면 내 이름이 들어갑니다">
           ${dd?`<span class="u-badge">${dd.label}</span>`:(u.done?"":`<span class="u-badge u-nodate">기한 없음</span>`)}
           <input class="u-date" type="date" data-udue="${esc(u.id)}" value="${esc(u.due||"")}" title="마감일">
         </span>
@@ -950,6 +960,7 @@ function viewUrgent(){
     </div>`;
   const add = `<div class="u-add">
       <input class="u-add-text" type="text" placeholder="급한 일 추가…" data-uaddtext maxlength="140">
+      <input class="u-add-who" type="text" placeholder="담당자(선택)" data-uaddwho maxlength="12" title="담당자(선택)">
       <input class="u-add-date" type="date" data-uadddate title="마감일(선택)">
       <button class="btn u-add-btn" data-uadd>추가</button>
     </div>`;
@@ -970,18 +981,26 @@ function renderUrgent(){
   box.querySelectorAll("[data-udue]").forEach(inp=>{
     inp.onchange=()=>{ const u=find(inp.dataset.udue); if(u){ u.due=inp.value||""; save(); renderUrgent(); } };
   });
+  box.querySelectorAll("[data-uwho]").forEach(inp=>{
+    inp.oninput=()=>{ const u=find(inp.dataset.uwho); if(u){ u.who=inp.value.trim(); save(); } };
+    inp.ondblclick=()=>{ if(NAME && NAME!=="익명"){ const u=find(inp.dataset.uwho); inp.value=NAME; if(u){ u.who=NAME; save(); } } };
+    inp.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } };
+  });
   box.querySelectorAll("[data-udone]").forEach(b=>{
     b.onclick=()=>{ const u=find(b.dataset.udone); if(u){ u.done=!u.done; save(); renderUrgent(); } };
   });
   box.querySelectorAll("[data-udel]").forEach(b=>{
     b.onclick=()=>{ const id=b.dataset.udel; M.urgent=(M.urgent||[]).filter(u=>u.id!==id); save(); renderUrgent(); };
   });
-  const addBtn=box.querySelector("[data-uadd]"), addText=box.querySelector("[data-uaddtext]"), addDate=box.querySelector("[data-uadddate]");
+  const addBtn=box.querySelector("[data-uadd]"), addText=box.querySelector("[data-uaddtext]"),
+        addWho=box.querySelector("[data-uaddwho]"), addDate=box.querySelector("[data-uadddate]");
   const doAdd=()=>{ const text=(addText.value||"").trim(); if(!text) return;
-    (M.urgent=M.urgent||[]).push({ id:uid("u"), text, due:addDate.value||"", done:false, ts:Date.now() });
+    (M.urgent=M.urgent||[]).push({ id:uid("u"), text, who:(addWho&&addWho.value||"").trim(), due:addDate.value||"", done:false, ts:Date.now() });
     save(); renderUrgent(); };
   if(addBtn) addBtn.onclick=doAdd;
-  if(addText) addText.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); doAdd(); } };
+  const addKey=e=>{ if(e.key==="Enter"){ e.preventDefault(); doAdd(); } };
+  if(addText) addText.onkeydown=addKey;
+  if(addWho) addWho.onkeydown=addKey;
 }
 /* ---- 열린 논의 · 회의 공간 (편집 모드 없이 누구나 주제 발의 + 댓글) ---- */
 function viewForum(){
